@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+
+    <style>
+        body {
+            margin: 0;
+            font-family: sans-serif;
+            background: #0d0d0f;
+            color: #eee;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+        }
+
+    </style>
+</head>
+
+<body>
+    <p>Name your flowchart</p>
+    <form action="/create_flowchart" method="POST">
+        <input type="text" name="flowchart_name" placeholder="Enter flowchart name">
+        <button>Create</button>
+     </form>
+</body>
+
+
+</html>

@@ -1,0 +1,1476 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ flowchart_name }} — Flowchart Builder</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            background: #050507;
+            color: #f0f0f0;
+            font-family: sans-serif;
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: row;
+        }
+
+        #toolbar {
+            background: linear-gradient(90deg, #0c0c10 0%, #060608 100%);
+            border-right: 1px solid #6a28a0;
+            padding: 20px 14px;
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
+            gap: 7px;
+            width: 172px;
+            min-width: 172px;
+            overflow-y: auto;
+            box-shadow: 4px 0 28px rgba(0,0,0,0.8), 1px 0 0 rgba(255,255,255,0.04);
+        }
+        #toolbar h2 {
+            font-size: 0.8rem;
+            color: #555;
+            margin-bottom: 6px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #2a1a40;
+            line-height: 1.4;
+        }
+        #toolbar h2 span { color: #ccc; font-size: 0.95rem; display: block; margin-top: 2px; }
+
+        .toolbar-btn {
+            background: linear-gradient(160deg, #1c1c24, #101016);
+            color: #d0d0d0;
+            border: 1px solid #4a1a70;
+            border-radius: 6px;
+            padding: 9px 12px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            text-align: left;
+            width: 100%;
+            transition: all 0.18s;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.05);
+        }
+        .toolbar-btn:hover {
+            background: linear-gradient(160deg, #2e1840, #1e0f2e);
+            border-color: #8a35c0;
+            color: #fff;
+            box-shadow: 0 5px 18px rgba(100,20,160,0.45), inset 0 1px 0 rgba(255,255,255,0.08);
+            transform: translateX(2px);
+        }
+        .toolbar-btn:active { transform: translateX(0); box-shadow: 0 1px 4px rgba(0,0,0,0.5); }
+        .toolbar-btn.active { background: linear-gradient(160deg, #550090, #3d0060); border-color: #a060e0; color: #fff; box-shadow: 0 4px 18px rgba(140,0,220,0.5); }
+
+        .toolbar-divider { width: 100%; height: 1px; background: #4a1a70; opacity: 0.7; margin: 4px 0; }
+
+        #color-picker-section { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+        #color-picker-section label { font-size: 0.75rem; color: #555; width: 100%; margin-bottom: 2px; }
+
+        .color-swatch {
+            width: 22px; height: 22px;
+            border-radius: 4px;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: border-color 0.15s, transform 0.15s, box-shadow 0.15s;
+        }
+        .color-swatch:hover { transform: scale(1.2); box-shadow: 0 4px 14px rgba(0,0,0,0.7); }
+        .color-swatch.active { border-color: #ddd; box-shadow: 0 0 10px rgba(255,255,255,0.25); }
+
+        #canvas {
+            flex: 1; position: relative; overflow: hidden; cursor: default;
+            background-color: #050507;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='48'%3E%3Cline x1='24' y1='14' x2='24' y2='34' stroke='white' stroke-width='1.5' stroke-opacity='0.22'/%3E%3Cline x1='14' y1='24' x2='34' y2='24' stroke='white' stroke-width='1.5' stroke-opacity='0.22'/%3E%3C/svg%3E");
+            background-size: 48px 48px;
+        }
+        #canvas.connect-mode { cursor: crosshair; }
+
+        #snap-label { font-size: 0.8rem; color: #777; display: flex; align-items: center; gap: 6px; cursor: pointer; width: 100%; }
+        #snap-label input { accent-color: #8a35c0; cursor: pointer; width: 14px; height: 14px; }
+
+        #wire-svg {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            z-index: 5;
+            pointer-events: none;
+        }
+
+        .node {
+            position: absolute;
+            background: linear-gradient(150deg, #18181e 0%, #0c0c10 100%);
+            border: 1px solid var(--accent, #8a35c0);
+            border-radius: 7px;
+            padding: 12px 18px;
+            min-width: 150px;
+            cursor: grab;
+            user-select: none;
+            z-index: 10;
+            overflow: hidden;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            box-shadow: 0 3px 12px rgba(0,0,0,0.7), inset 0 1px 0 rgba(255,255,255,0.06);
+            transition: box-shadow 0.2s, transform 0.2s, border-color 0.2s;
+        }
+        .node:hover {
+            box-shadow: 0 8px 28px rgba(0,0,0,0.8), 0 2px 8px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.09);
+            transform: translateY(-2px);
+        }
+        .node:active { cursor: grabbing; }
+        .node.dragging {
+            box-shadow: 0 24px 60px rgba(0,0,0,0.9), 0 8px 20px rgba(0,0,0,0.6);
+            transform: scale(1.03) translateY(-7px);
+            z-index: 50;
+        }
+        .node.selected { outline: 2px solid #c0a0ff; outline-offset: 3px; }
+        .node.connect-source { outline: 2px solid #a060e0; outline-offset: 3px; box-shadow: 0 0 18px rgba(140,40,200,0.5); }
+
+        .node-title { font-size: 0.95rem; font-weight: bold; color: #eee; margin-bottom: 4px; word-break: break-word; white-space: normal; }
+        .node-status { font-size: 0.72rem; color: #555; margin-top: 2px; }
+        .note-text { font-size: 0.85rem; color: #b0a870; font-style: italic; word-break: break-word; white-space: normal; }
+        .gate-label { font-size: 0.9rem; font-weight: bold; letter-spacing: 3px; word-break: break-word; }
+
+        .node.completed { border-color: #2e7a3a !important; box-shadow: 0 3px 12px rgba(0,0,0,0.7), 0 0 12px rgba(46,122,58,0.2); }
+        .node.completed .node-status { color: #55bb66; }
+        .node.locked { border-color: #1e1e22 !important; opacity: 0.45; }
+
+        .gate-node { background: linear-gradient(150deg, #100d18, #080610); min-width: 80px; text-align: center; }
+
+        .start-node { background: linear-gradient(150deg, #0c1a0c, #060e06); }
+        .start-label { font-size: 0.85rem; color: #55bb66; letter-spacing: 2px; font-weight: bold; }
+
+        .end-node { background: linear-gradient(150deg, #1a0c0c, #0e0606); }
+        .end-label { font-size: 0.85rem; color: #cc5555; letter-spacing: 2px; font-weight: bold; }
+        .end-node.completed .end-label { color: #55bb66; }
+
+        .note-node { background: #111108; border-style: dashed; min-width: 160px; }
+
+        .checklist { margin-top: 8px; border-top: 1px solid #1e1e24; padding-top: 6px; }
+        .checklist-item {
+            display: flex; align-items: center; gap: 6px;
+            margin-top: 4px; font-size: 0.8rem; color: #aaa;
+        }
+        .checklist-item input[type="checkbox"] { accent-color: #7a30b0; cursor: pointer; }
+        .checklist-item.checked { color: #4aaa55; text-decoration: line-through; }
+        .checklist-item span { cursor: text; flex: 1; }
+        .checklist-delete {
+            opacity: 0;
+            color: #555;
+            font-size: 0.85rem;
+            cursor: pointer;
+            padding: 0 2px;
+            line-height: 1;
+            transition: opacity 0.15s, color 0.15s;
+            flex-shrink: 0;
+        }
+        .checklist-item:hover .checklist-delete { opacity: 1; }
+        .checklist-delete:hover { color: #c04040; }
+
+        .checklist-add {
+            display: flex; align-items: center; justify-content: center;
+            margin-top: 6px; padding: 3px 6px;
+            border: 1px dashed #3a1a50; border-radius: 4px;
+            color: #5a2080; font-size: 0.8rem; cursor: pointer;
+            transition: background 0.15s, color 0.15s;
+        }
+        .checklist-add:hover { background: #1a0a28; color: #9a50d0; border-color: #7a30b0; }
+
+        .resize-handle {
+            position: absolute;
+            bottom: 4px;
+            right: 4px;
+            width: 10px;
+            height: 10px;
+            border-right: 2px solid #5a2080;
+            border-bottom: 2px solid #5a2080;
+            cursor: nwse-resize;
+            opacity: 0.3;
+            transition: opacity 0.15s;
+        }
+        .node:hover .resize-handle { opacity: 1; }
+
+        /* Clock node */
+        .clock-node { background: #0a0a18; min-width: 160px; text-align: center; }
+        .clock-label { font-size: 0.75rem; color: #666; letter-spacing: 2px; margin-bottom: 6px; }
+        .clock-display {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: #7a30b0;
+            letter-spacing: 2px;
+            font-variant-numeric: tabular-nums;
+            margin-bottom: 8px;
+            transition: color 0.3s;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+        .clock-display:hover { background: #1a1a28; }
+        .clock-display.fired { color: #4aaa55; }
+        .clock-controls { display: flex; gap: 6px; justify-content: center; margin-bottom: 4px; }
+        .clock-btn {
+            background: linear-gradient(160deg, #1e1e2a, #141420);
+            border: 1px solid #3a1a50;
+            border-radius: 5px;
+            color: #aaa;
+            font-size: 0.75rem;
+            padding: 4px 10px;
+            cursor: pointer;
+            transition: all 0.15s;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.4);
+        }
+        .clock-btn:hover { background: linear-gradient(160deg, #2a1a38, #1e0f28); color: #eee; box-shadow: 0 4px 10px rgba(0,0,0,0.5); transform: translateY(-1px); }
+        .clock-btn.running { border-color: #7a30b0; color: #c080e0; }
+
+        [contenteditable="true"] {
+            outline: 1px solid #7a30b0;
+            border-radius: 3px;
+            padding: 1px 4px;
+            cursor: text;
+            min-width: 40px;
+            display: inline-block;
+        }
+
+        /* Modal */
+        #modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.6);
+            z-index: 100;
+            align-items: center;
+            justify-content: center;
+        }
+        #modal-overlay.visible { display: flex; }
+
+        #modal {
+            background: linear-gradient(160deg, #161618, #0f0f13);
+            border: 1px solid #5a2080;
+            border-radius: 10px;
+            padding: 28px 32px;
+            min-width: 340px;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            box-shadow: 0 24px 60px rgba(0,0,0,0.85), 0 4px 20px rgba(90,32,128,0.25), inset 0 1px 0 rgba(255,255,255,0.05);
+        }
+        #modal h3 { font-size: 1rem; color: #ccc; font-weight: 600; }
+
+        #modal input[type="text"] {
+            background: #0d0d0f;
+            border: 1px solid #3a1a50;
+            border-radius: 6px;
+            padding: 10px 14px;
+            color: #eee;
+            font-size: 0.95rem;
+            outline: none;
+            transition: border-color 0.15s;
+        }
+        #modal input[type="text"]:focus { border-color: #7a30b0; }
+
+        #modal-buttons { display: flex; gap: 10px; justify-content: flex-end; }
+        .modal-btn {
+            padding: 8px 20px;
+            border-radius: 6px;
+            border: 1px solid #3a1a50;
+            background: linear-gradient(160deg, #1e1e26, #141418);
+            color: #ccc;
+            cursor: pointer;
+            font-size: 0.88rem;
+            transition: all 0.15s;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+        }
+        .modal-btn:hover { background: linear-gradient(160deg, #2a1a38, #1e0f28); color: #eee; box-shadow: 0 4px 12px rgba(0,0,0,0.5); transform: translateY(-1px); }
+        .modal-btn:active { transform: translateY(0); }
+        .modal-btn.primary { background: linear-gradient(160deg, #4a0078, #3d0060); border-color: #7a30b0; color: #eee; box-shadow: 0 4px 14px rgba(100,0,160,0.35); }
+        .modal-btn.primary:hover { background: linear-gradient(160deg, #5a1090, #4a0078); box-shadow: 0 6px 18px rgba(120,0,200,0.45); }
+
+        #hint {
+            position: absolute;
+            bottom: 14px; left: 50%; transform: translateX(-50%);
+            font-size: 0.75rem; color: #333;
+            pointer-events: none;
+        }
+
+        /* Settings */
+        #settings-overlay {
+            display: none; position: fixed; inset: 0;
+            z-index: 90; background: rgba(0,0,0,0.25);
+        }
+        #settings-overlay.visible { display: block; }
+
+        #settings-panel {
+            position: fixed; top: 0; right: 0;
+            width: 264px; height: 100vh;
+            background: linear-gradient(180deg, #0e0e14 0%, #080810 100%);
+            border-left: 1px solid #5a2080;
+            z-index: 95;
+            transform: translateX(100%);
+            transition: transform 0.25s cubic-bezier(0.4,0,0.2,1);
+            overflow-y: auto;
+            padding: 20px 16px;
+            display: flex; flex-direction: column; gap: 4px;
+            box-shadow: -4px 0 32px rgba(0,0,0,0.85);
+        }
+        #settings-panel.visible { transform: translateX(0); }
+
+        .settings-header {
+            display: flex; justify-content: space-between; align-items: center;
+            padding-bottom: 14px; border-bottom: 1px solid #2a1a40; margin-bottom: 6px;
+        }
+        .settings-header span { font-size: 1rem; color: #ccc; font-weight: 600; }
+        .settings-close {
+            background: none; border: none; color: #555; font-size: 1.1rem;
+            cursor: pointer; padding: 2px 7px; border-radius: 4px; transition: color 0.15s, background 0.15s;
+        }
+        .settings-close:hover { color: #eee; background: #1a1a28; }
+
+        .settings-section { display: flex; flex-direction: column; gap: 10px; padding: 12px 0; }
+        .settings-section-title { font-size: 0.68rem; color: #4a4a60; letter-spacing: 1.5px; text-transform: uppercase; }
+        .settings-divider { height: 1px; background: #2a1a40; margin: 2px 0; }
+
+        .settings-row {
+            display: flex; align-items: center; justify-content: space-between;
+            gap: 8px; font-size: 0.84rem; color: #aaa;
+        }
+        .settings-row label { flex: 1; cursor: pointer; }
+        .settings-row input[type="range"] { width: 88px; accent-color: #7a30b0; cursor: pointer; }
+        .settings-row input[type="checkbox"] { accent-color: #7a30b0; width: 15px; height: 15px; cursor: pointer; }
+        .settings-row span { font-size: 0.76rem; color: #666; width: 34px; text-align: right; }
+
+        .swatch-row { display: flex; gap: 7px; flex-wrap: wrap; }
+        .bg-swatch {
+            width: 26px; height: 26px; border-radius: 5px; cursor: pointer;
+            border: 2px solid #2a1a40;
+            transition: border-color 0.15s, transform 0.15s;
+        }
+        .bg-swatch:hover { transform: scale(1.12); border-color: #5a2080; }
+        .bg-swatch.active { border-color: #c0a0ff; }
+
+        .settings-btn {
+            background: linear-gradient(160deg, #1c1c24, #101016);
+            color: #d0d0d0; border: 1px solid #4a1a70; border-radius: 6px;
+            padding: 9px 12px; cursor: pointer; font-size: 0.84rem;
+            text-align: left; width: 100%; display: block;
+            transition: all 0.18s;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.04);
+        }
+        .settings-btn:hover {
+            background: linear-gradient(160deg, #2e1840, #1e0f2e);
+            border-color: #8a35c0; color: #fff;
+        }
+
+        /* Color picker swatch */
+        .color-picker-wrap {
+            height: 22px; padding: 0 8px; border-radius: 4px;
+            border: 1px solid #4a1a70; cursor: pointer;
+            overflow: hidden; position: relative;
+            display: inline-flex; align-items: center; justify-content: center;
+            flex-shrink: 0; background: #181820;
+            font-size: 0.72rem; color: #aaa; white-space: nowrap;
+            transition: border-color 0.15s, color 0.15s, transform 0.15s;
+        }
+        .color-picker-wrap:hover { border-color: #8a35c0; color: #fff; transform: translateX(2px); }
+        .color-picker-wrap input[type="color"] {
+            position: absolute; inset: -4px; opacity: 0; cursor: pointer;
+            width: calc(100% + 8px); height: calc(100% + 8px); border: none; padding: 0;
+        }
+
+        /* UI theme row */
+        .theme-picker-wrap {
+            width: 28px; height: 28px; border-radius: 5px;
+            border: 2px solid #4a1a70; cursor: pointer;
+            overflow: hidden; position: relative; display: inline-flex; flex-shrink: 0;
+            background: #7a30b0; transition: border-color 0.15s, transform 0.15s;
+        }
+        .theme-picker-wrap:hover { border-color: #8a35c0; transform: scale(1.1); }
+        .theme-picker-wrap input[type="color"] {
+            position: absolute; inset: -4px; opacity: 0; cursor: pointer;
+            width: calc(100% + 8px); height: calc(100% + 8px); border: none; padding: 0;
+        }
+        .theme-reset-btn {
+            background: linear-gradient(160deg, #1c1c24, #101016);
+            color: #888; border: 1px solid #4a1a70; border-radius: 5px;
+            padding: 4px 10px; cursor: pointer; font-size: 0.76rem;
+            transition: all 0.15s;
+        }
+        .theme-reset-btn:hover { border-color: #8a35c0; color: #ddd; }
+    </style>
+<style id="theme-style"></style>
+</head>
+<body>
+
+<div id="toolbar">
+    <h2>Editing: <span>{{ flowchart_name }}</span></h2>
+    <a href="/dashboard" style="font-size:0.75rem;color:#444;text-decoration:none;padding:4px 8px;border-radius:5px;transition:color 0.15s;" onmouseover="this.style.color='#aaa'" onmouseout="this.style.color='#444'">← Dashboard</a>
+
+    <div id="color-picker-section">
+        <label>Color</label>
+        <div class="color-swatch active" style="background:#7a30b0" data-color="#7a30b0" title="Deep Purple" onclick="setAccent(this)"></div>
+        <div class="color-swatch" style="background:#2060a0" data-color="#2060a0" title="Slate Blue" onclick="setAccent(this)"></div>
+        <div class="color-swatch" style="background:#207040" data-color="#207040" title="Forest" onclick="setAccent(this)"></div>
+        <div class="color-swatch" style="background:#904020" data-color="#904020" title="Ember" onclick="setAccent(this)"></div>
+        <div class="color-swatch" style="background:#606060" data-color="#606060" title="Mono" onclick="setAccent(this)"></div>
+        <label class="color-picker-wrap" title="Pick a custom color">
+            Custom
+            <input type="color" class="custom-node-picker" value="#7a30b0" oninput="setAccentFromPicker(this.value)">
+        </label>
+    </div>
+
+    <div class="toolbar-divider"></div>
+    <button class="toolbar-btn" onclick="addStartNode()">Start</button>
+    <button class="toolbar-btn" onclick="addTaskNode(false)">+ Task</button>
+    <button class="toolbar-btn" onclick="addTaskNode(true)">+ Checklist</button>
+    <button class="toolbar-btn" onclick="addNoteNode()">Note</button>
+    <button class="toolbar-btn" onclick="addEndNode()">End</button>
+    <div class="toolbar-divider"></div>
+    <button class="toolbar-btn" onclick="addGateNode('AND')">AND</button>
+    <button class="toolbar-btn" onclick="addGateNode('OR')">OR</button>
+    <button class="toolbar-btn" onclick="addGateNode('XOR')">XOR</button>
+    <button class="toolbar-btn" onclick="addClockNode()">⏱ Timer</button>
+    <div class="toolbar-divider"></div>
+    <button class="toolbar-btn" id="connect-btn" onclick="toggleConnectMode()">&#x1F517; Connect</button>
+    <div class="toolbar-divider"></div>
+    <button class="toolbar-btn" onclick="saveFlowchart()">Save</button>
+    <div class="toolbar-divider"></div>
+    <button class="toolbar-btn" onclick="openSettings()">⚙ Settings</button>
+</div>
+
+<div id="canvas">
+    <svg id="wire-svg"></svg>
+    <div id="hint">Click "Connect" then click two nodes to wire them · Click a wire to select · Delete removes selection</div>
+</div>
+
+<div id="settings-overlay" onclick="closeSettings()"></div>
+<div id="settings-panel">
+    <div class="settings-header">
+        <span>⚙ Settings</span>
+        <button class="settings-close" onclick="closeSettings()">✕</button>
+    </div>
+
+    <div class="settings-section">
+        <div class="settings-section-title">Grid</div>
+        <div class="settings-row">
+            <label>Grid size</label>
+            <input type="range" id="grid-size-input" min="24" max="96" step="24" value="48" oninput="updateGridSize(this.value)">
+            <span id="grid-size-label">48px</span>
+        </div>
+        <div class="settings-row">
+            <label for="snap-toggle">Snap to grid</label>
+            <input type="checkbox" id="snap-toggle">
+        </div>
+    </div>
+
+    <div class="settings-divider"></div>
+
+    <div class="settings-section">
+        <div class="settings-section-title">Canvas Background</div>
+        <div class="swatch-row">
+            <div class="bg-swatch active" style="background:#050507" data-bg="#050507" onclick="setCanvasBg(this)" title="Void"></div>
+            <div class="bg-swatch" style="background:#06060f" data-bg="#06060f" onclick="setCanvasBg(this)" title="Deep Blue"></div>
+            <div class="bg-swatch" style="background:#09070b" data-bg="#09070b" onclick="setCanvasBg(this)" title="Dark Purple"></div>
+            <div class="bg-swatch" style="background:#060a06" data-bg="#060a06" onclick="setCanvasBg(this)" title="Forest"></div>
+            <div class="bg-swatch" style="background:#0b0807" data-bg="#0b0807" onclick="setCanvasBg(this)" title="Ember"></div>
+            <label class="color-picker-wrap" title="Pick a custom background color">
+                Custom
+                <input type="color" class="custom-bg-picker" value="#050507" oninput="setCanvasBgFromPicker(this.value)">
+            </label>
+        </div>
+    </div>
+
+    <div class="settings-divider"></div>
+
+    <div class="settings-section">
+        <div class="settings-section-title">Default Accent</div>
+        <div class="swatch-row">
+            <div class="color-swatch active" style="background:#7a30b0" data-color="#7a30b0" title="Deep Purple" onclick="setAccent(this)"></div>
+            <div class="color-swatch" style="background:#2060a0" data-color="#2060a0" title="Slate Blue" onclick="setAccent(this)"></div>
+            <div class="color-swatch" style="background:#207040" data-color="#207040" title="Forest" onclick="setAccent(this)"></div>
+            <div class="color-swatch" style="background:#904020" data-color="#904020" title="Ember" onclick="setAccent(this)"></div>
+            <div class="color-swatch" style="background:#606060" data-color="#606060" title="Mono" onclick="setAccent(this)"></div>
+            <label class="color-picker-wrap" title="Custom color">
+                <input type="color" class="custom-node-picker" value="#7a30b0" oninput="setAccentFromPicker(this.value)">
+            </label>
+        </div>
+    </div>
+
+    <div class="settings-divider"></div>
+
+    <div class="settings-section">
+        <div class="settings-section-title">UI Theme</div>
+        <div class="settings-row">
+            <label>Chrome color</label>
+            <div style="display:flex;gap:6px;align-items:center;">
+                <label class="theme-picker-wrap" title="Change UI accent color">
+                    <input type="color" id="ui-theme-picker" value="#7a30b0" oninput="applyThemeColor(this.value)">
+                </label>
+                <button class="theme-reset-btn" onclick="resetThemeColor()">Reset</button>
+            </div>
+        </div>
+        <div style="font-size:0.72rem; color:#444; line-height:1.4">
+            Changes toolbar, borders, and glow effects.
+        </div>
+    </div>
+
+    <div class="settings-divider"></div>
+
+    <div class="settings-section">
+        <div class="settings-section-title">Data</div>
+        <button class="settings-btn" onclick="exportFlowchart()">↓ Export JSON</button>
+        <label class="settings-btn" style="cursor:pointer">
+            ↑ Import JSON
+            <input type="file" accept=".json" style="display:none" onchange="importFlowchart(this)">
+        </label>
+    </div>
+
+    <div class="settings-divider" style="margin-top:auto"></div>
+
+    <div class="settings-section">
+        <button class="settings-btn" style="border-color:#6a2020; color:#cc7070;" onmouseover="this.style.borderColor='#c04040';this.style.color='#ffaaaa'" onmouseout="this.style.borderColor='#6a2020';this.style.color='#cc7070'" onclick="resetAll()">↺ Reset All Settings</button>
+    </div>
+</div>
+
+<div id="modal-overlay">
+    <div id="modal">
+        <h3 id="modal-title">Name your task</h3>
+        <input type="text" id="modal-input" placeholder="">
+        <div id="modal-buttons">
+            <button class="modal-btn" onclick="modalCancel()">Cancel</button>
+            <button class="modal-btn primary" id="modal-confirm-btn" onclick="modalConfirm()">Create</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    const flowchartName = "{{ flowchart_name }}";
+    const flowchartId = {{ flowchart_id }};
+
+    // --- Modal ---
+    let _modalResolve = null;
+
+    function showModal(title, placeholder = "", confirmLabel = "Create") {
+        return new Promise(resolve => {
+            _modalResolve = resolve;
+            document.getElementById("modal-title").textContent = title;
+            document.getElementById("modal-input").value = "";
+            document.getElementById("modal-input").placeholder = placeholder;
+            document.getElementById("modal-confirm-btn").textContent = confirmLabel;
+            document.getElementById("modal-overlay").classList.add("visible");
+            document.getElementById("modal-input").focus();
+        });
+    }
+
+    function modalConfirm() {
+        const val = document.getElementById("modal-input").value.trim();
+        document.getElementById("modal-overlay").classList.remove("visible");
+        if (_modalResolve) { _modalResolve(val || null); _modalResolve = null; }
+    }
+
+    function modalCancel() {
+        document.getElementById("modal-overlay").classList.remove("visible");
+        if (_modalResolve) { _modalResolve(null); _modalResolve = null; }
+    }
+
+    document.getElementById("modal-input").addEventListener("keydown", (e) => {
+        if (e.key === "Enter") modalConfirm();
+        if (e.key === "Escape") modalCancel();
+    });
+
+    let GRID = 48;
+    function snap(val) {
+        if (!document.getElementById("snap-toggle").checked) return val;
+        const offset = GRID / 2;
+        return Math.round((val - offset) / GRID) * GRID + offset;
+    }
+    let nodeCounter = 0;
+    let connCounter = 0;
+    let currentAccent = "#7a30b0";
+    let selectedNode = null;
+    let selectedConnId = null;
+    let connectMode = false;
+    let connectSource = null;
+    let connections = []; // [{id, sourceId, targetId, color}]
+
+    // --- Connect mode ---
+    function toggleConnectMode() {
+        connectMode = !connectMode;
+        const btn = document.getElementById("connect-btn");
+        const canvas = document.getElementById("canvas");
+        btn.classList.toggle("active", connectMode);
+        canvas.classList.toggle("connect-mode", connectMode);
+        if (!connectMode && connectSource) {
+            connectSource.classList.remove("connect-source");
+            connectSource = null;
+        }
+    }
+
+    // --- Canvas click: deselect or handle connect mode ---
+    document.getElementById("canvas").addEventListener("click", (e) => {
+        if (!e.target.closest(".node")) {
+            deselectAll();
+        }
+    });
+
+    // --- Keyboard: delete selected ---
+    document.addEventListener("keydown", (e) => {
+        if (e.key === "Delete" || e.key === "Backspace") {
+            if (document.activeElement.tagName === "INPUT") return;
+            if (selectedConnId) {
+                connections = connections.filter(c => c.id !== selectedConnId);
+                selectedConnId = null;
+                renderWires();
+                evaluateAll();
+            } else if (selectedNode) {
+                const id = selectedNode.id;
+                connections = connections.filter(c => c.sourceId !== id && c.targetId !== id);
+                selectedNode.remove();
+                selectedNode = null;
+                renderWires();
+                evaluateAll();
+            }
+        }
+        if (e.key === "Escape" && connectMode) toggleConnectMode();
+    });
+
+    // --- Color picker ---
+    function setAccent(swatch) {
+        document.querySelectorAll(".color-swatch").forEach(s => s.classList.remove("active"));
+        swatch.classList.add("active");
+        currentAccent = swatch.dataset.color;
+        applyAccent(currentAccent);
+        document.querySelectorAll(".custom-node-picker").forEach(p => p.value = currentAccent);
+    }
+
+    function setAccentFromPicker(hex) {
+        document.querySelectorAll(".color-swatch").forEach(s => s.classList.remove("active"));
+        currentAccent = hex;
+        applyAccent(currentAccent);
+        document.querySelectorAll(".custom-node-picker").forEach(p => {
+            p.value = hex;
+            const wrap = p.closest(".color-picker-wrap");
+            if (wrap) { wrap.style.background = hex; wrap.style.color = isLight(hex) ? "#111" : "#eee"; }
+        });
+    }
+
+    function applyAccent(color) {
+        if (selectedNode) {
+            selectedNode.style.borderColor = color;
+            const label = selectedNode.querySelector(".gate-label");
+            if (label) label.style.color = color;
+        }
+        if (selectedConnId) {
+            const conn = connections.find(c => c.id === selectedConnId);
+            if (conn) { conn.color = color; renderWires(); }
+        }
+        document.documentElement.style.setProperty("--accent", color);
+    }
+
+    // --- UI Theme ---
+    function isLight(hex) {
+        const r = parseInt(hex.slice(1,3),16);
+        const g = parseInt(hex.slice(3,5),16);
+        const b = parseInt(hex.slice(5,7),16);
+        return (r*299 + g*587 + b*114) / 1000 > 128;
+    }
+
+    function resetThemeColor() {
+        const purple = "#7a30b0";
+        document.getElementById("ui-theme-picker").value = purple;
+        const wrap = document.querySelector(".theme-picker-wrap");
+        if (wrap) wrap.style.background = purple;
+        document.getElementById("theme-style").textContent = "";
+    }
+
+    function hexToHsl(hex) {
+        let r = parseInt(hex.slice(1,3),16)/255;
+        let g = parseInt(hex.slice(3,5),16)/255;
+        let b = parseInt(hex.slice(5,7),16)/255;
+        const max = Math.max(r,g,b), min = Math.min(r,g,b);
+        let h, s, l = (max+min)/2;
+        if (max === min) { h = s = 0; } else {
+            const d = max - min;
+            s = l > 0.5 ? d/(2-max-min) : d/(max+min);
+            switch(max) {
+                case r: h=((g-b)/d+(g<b?6:0))/6; break;
+                case g: h=((b-r)/d+2)/6; break;
+                case b: h=((r-g)/d+4)/6; break;
+            }
+        }
+        return [Math.round(h*360), Math.round(s*100), Math.round(l*100)];
+    }
+
+    function applyThemeColor(hex) {
+        const [h, s, l] = hexToHsl(hex);
+        const clamp = (v, min, max) => Math.min(max, Math.max(min, v));
+        const hsl  = (ls, ss, ll) => `hsl(${h},${clamp(ss,5,100)}%,${clamp(ll,3,85)}%)`;
+        const hsla = (ls, ss, ll, a) => `hsla(${h},${clamp(ss,5,100)}%,${clamp(ll,3,85)}%,${a})`;
+
+        const dark      = hsl(h, s*0.85, l*0.48);
+        const mid       = hex;
+        const bright    = hsl(h, Math.min(100,s*1.1), Math.min(78,l*1.2));
+        const light     = hsl(h, Math.min(100,s*1.2), Math.min(88,l*1.65));
+        const active1   = hsl(h, Math.min(100,s+5), l*0.62);
+        const active2   = hsl(h, Math.min(100,s+5), l*0.43);
+        const modal     = hsl(h, s*0.9, l*0.72);
+        const glow      = hsla(h, s, l, 0.45);
+        const glowStrong= hsla(h, Math.min(100,s+10), l, 0.52);
+        const divider   = hsl(h, s*0.7, l*0.35);
+
+        const wrap = document.querySelector(".theme-picker-wrap");
+        if (wrap) wrap.style.background = hex;
+
+        document.getElementById("theme-style").textContent = `
+            #toolbar { border-right-color: ${bright} !important; }
+            .toolbar-btn { border-color: ${dark} !important; }
+            .toolbar-btn:hover { border-color: ${bright} !important; box-shadow: 0 5px 18px ${glow}, inset 0 1px 0 rgba(255,255,255,0.08) !important; }
+            .toolbar-btn.active { background: linear-gradient(160deg,${active1},${active2}) !important; border-color: ${bright} !important; box-shadow: 0 4px 18px ${glowStrong} !important; }
+            .toolbar-divider { background: ${dark} !important; }
+            .node.selected { outline-color: ${light} !important; }
+            .node.connect-source { outline-color: ${bright} !important; box-shadow: 0 0 18px ${glowStrong} !important; }
+            .checklist-item input[type="checkbox"] { accent-color: ${mid} !important; }
+            .checklist-add { border-color: ${dark} !important; color: ${dark} !important; }
+            .checklist-add:hover { border-color: ${mid} !important; color: ${bright} !important; }
+            .resize-handle { border-color: ${modal} !important; }
+            .clock-display { color: ${mid} !important; }
+            [contenteditable="true"] { outline-color: ${mid} !important; }
+            #modal { border-color: ${modal} !important; box-shadow: 0 24px 60px rgba(0,0,0,0.85), 0 4px 20px ${glow}, inset 0 1px 0 rgba(255,255,255,0.05) !important; }
+            #modal input[type="text"]:focus { border-color: ${mid} !important; }
+            .modal-btn.primary { background: linear-gradient(160deg,${active1},${active2}) !important; border-color: ${mid} !important; }
+            .modal-btn.primary:hover { box-shadow: 0 6px 18px ${glowStrong} !important; }
+            #settings-panel { border-left-color: ${bright} !important; }
+            .settings-divider { background: ${divider} !important; }
+            .color-picker-wrap { border-color: ${dark} !important; }
+            .color-picker-wrap:hover { border-color: ${bright} !important; }
+            .theme-picker-wrap { border-color: ${dark} !important; }
+            input[type="range"] { accent-color: ${mid} !important; }
+            input[type="checkbox"] { accent-color: ${mid} !important; }
+            .bg-swatch:hover { border-color: ${modal} !important; }
+            .bg-swatch.active { border-color: ${light} !important; }
+        `;
+    }
+
+    // --- Selection ---
+    function selectNode(node) {
+        deselectAll();
+        selectedNode = node;
+        node.classList.add("selected");
+    }
+
+    function selectWire(id) {
+        deselectAll();
+        selectedConnId = id;
+        renderWires();
+    }
+
+    function deselectAll() {
+        if (selectedNode) { selectedNode.classList.remove("selected"); selectedNode = null; }
+        if (selectedConnId) { selectedConnId = null; renderWires(); }
+    }
+
+    // --- Node factory ---
+    function spawnNode(extraClasses = []) {
+        nodeCounter++;
+        const id = "node-" + nodeCounter;
+        const x = 80 + (nodeCounter * 45) % 520;
+        const y = 80 + (nodeCounter * 35) % 320;
+        const node = document.createElement("div");
+        node.classList.add("node", ...extraClasses);
+        node.id = id;
+        node.style.left = x + "px";
+        node.style.top = y + "px";
+        node.style.borderColor = currentAccent;
+        return { node, id };
+    }
+
+    function attachNode(node) {
+        const handle = document.createElement("div");
+        handle.classList.add("resize-handle");
+        node.appendChild(handle);
+
+        node.addEventListener("click", (e) => {
+            e.stopPropagation();
+            if (connectMode) {
+                handleConnectClick(node);
+            } else {
+                selectNode(node);
+            }
+        });
+        document.getElementById("canvas").appendChild(node);
+        makeDraggable(node);
+        makeResizable(node);
+    }
+
+    function handleConnectClick(node) {
+        if (!connectSource) {
+            connectSource = node;
+            node.classList.add("connect-source");
+        } else if (connectSource === node) {
+            connectSource.classList.remove("connect-source");
+            connectSource = null;
+        } else {
+            connCounter++;
+            connections.push({ id: "conn-" + connCounter, sourceId: connectSource.id, targetId: node.id, color: currentAccent });
+            connectSource.classList.remove("connect-source");
+            connectSource = null;
+            toggleConnectMode();
+            renderWires();
+            evaluateAll();
+        }
+    }
+
+    // --- Inline editing ---
+    function makeEditable(el) {
+        const original = el.textContent;
+        el.contentEditable = "true";
+        el.focus();
+        const range = document.createRange();
+        range.selectNodeContents(el);
+        const sel = window.getSelection();
+        sel.removeAllRanges();
+        sel.addRange(range);
+
+        function finish() {
+            el.contentEditable = "false";
+            if (!el.textContent.trim()) el.textContent = original;
+            el.removeEventListener("blur", finish);
+            el.removeEventListener("keydown", onKey);
+        }
+        function onKey(e) {
+            e.stopPropagation();
+            if (e.key === "Enter") { e.preventDefault(); el.blur(); }
+            if (e.key === "Escape") { el.textContent = original; el.blur(); }
+        }
+        el.addEventListener("blur", finish);
+        el.addEventListener("keydown", onKey);
+    }
+
+    // --- Node creators ---
+    function addStartNode() {
+        const { node, id } = spawnNode(["start-node"]);
+        node.innerHTML = `<div class="start-label">START</div>`;
+        node.classList.add("completed");
+        attachNode(node);
+        evaluateAll();
+    }
+
+    function addEndNode() {
+        const { node } = spawnNode(["end-node"]);
+        node.innerHTML = `<div class="end-label">END</div><div class="node-status">Waiting</div>`;
+        attachNode(node);
+    }
+
+    async function addTaskNode(isChecklist) {
+        const name = await showModal(isChecklist ? "Name your checklist" : "Name your task", "Task name...");
+        if (!name) return;
+        const { node, id } = spawnNode();
+        let checklistHTML = "";
+        if (isChecklist) {
+            const raw = await showModal("Add checklist items", "Item 1, Item 2, Item 3...", "Add");
+            if (raw) {
+                const items = raw.split(",").map(s => s.trim()).filter(Boolean);
+                checklistHTML = `<div class="checklist">` +
+                    items.map((item, i) =>
+                        `<label class="checklist-item" id="${id}-item-${i}">
+                            <input type="checkbox" onchange="onChecklistChange(this, '${id}')">
+                            <span ondblclick="event.stopPropagation(); event.preventDefault(); makeEditable(this)">${item}</span>
+                            <span class="checklist-delete" onclick="deleteChecklistItem(event, this)">&#x2715;</span>
+                        </label>`
+                    ).join("") +
+                    `<div class="checklist-add" onclick="event.stopPropagation(); addChecklistItem('${id}')">+ add item</div>
+                </div>`;
+            }
+        }
+        node.innerHTML = `<div class="node-title">${name}</div><div class="node-status">Unlocked</div>${checklistHTML}`;
+        node.querySelector(".node-title").addEventListener("dblclick", (e) => {
+            e.stopPropagation();
+            makeEditable(e.target);
+        });
+        if (!isChecklist) {
+            node.addEventListener("dblclick", (e) => {
+                if (!e.target.closest("input") && !e.target.closest(".node-title")) toggleComplete(node);
+            });
+        }
+        attachNode(node);
+    }
+
+    async function addNoteNode() {
+        const text = await showModal("Add a note", "Note text...", "Add");
+        if (!text) return;
+        const { node } = spawnNode(["note-node"]);
+        node.innerHTML = `<div class="note-text">${text}</div>`;
+        node.querySelector(".note-text").addEventListener("dblclick", (e) => {
+            e.stopPropagation();
+            makeEditable(e.target);
+        });
+        attachNode(node);
+    }
+
+    function addGateNode(type) {
+        const { node } = spawnNode(["gate-node"]);
+        node.dataset.gateType = type;
+        node.innerHTML = `<div class="gate-label" style="color:${currentAccent}">${type}</div><div class="node-status">0</div>`;
+        attachNode(node);
+    }
+
+    // --- Resize ---
+    function makeResizable(node) {
+        const handle = node.querySelector(".resize-handle");
+        let startX, startY, startW, startH, resizing = false;
+
+        handle.addEventListener("mousedown", (e) => {
+            e.stopPropagation();
+            e.preventDefault();
+            resizing = true;
+            startX = e.clientX;
+            startY = e.clientY;
+            startW = node.offsetWidth;
+            startH = node.offsetHeight;
+        });
+
+        document.addEventListener("mousemove", (e) => {
+            if (!resizing) return;
+            node.style.width    = Math.max(120, startW + e.clientX - startX) + "px";
+            node.style.minHeight = Math.max(48,  startH + e.clientY - startY) + "px";
+            renderWires();
+        });
+
+        document.addEventListener("mouseup", () => { resizing = false; });
+    }
+
+    // --- Drag ---
+    function makeDraggable(node) {
+        let startX, startY, startLeft, startTop, dragging = false;
+        node.addEventListener("mousedown", (e) => {
+            if (connectMode) return;
+            if (e.target.closest("input, label, .resize-handle")) return;
+            dragging = true;
+            startX = e.clientX; startY = e.clientY;
+            startLeft = parseInt(node.style.left) || 0;
+            startTop  = parseInt(node.style.top)  || 0;
+            node.classList.add("dragging");
+            e.preventDefault();
+        });
+        document.addEventListener("mousemove", (e) => {
+            if (!dragging) return;
+            node.style.left = snap(startLeft + e.clientX - startX) + "px";
+            node.style.top  = snap(startTop  + e.clientY - startY) + "px";
+            renderWires();
+        });
+        document.addEventListener("mouseup", () => {
+            if (dragging) node.classList.remove("dragging");
+            dragging = false;
+        });
+    }
+
+    // --- Checklist item management ---
+    function deleteChecklistItem(e, btn) {
+        e.stopPropagation();
+        e.preventDefault();
+        const item = btn.closest(".checklist-item");
+        const nodeId = item.closest(".node").id;
+        item.remove();
+        onChecklistChange(null, nodeId);
+    }
+
+    async function addChecklistItem(nodeId) {
+        const text = await showModal("Add checklist item", "Item name...", "Add");
+        if (!text) return;
+        const checklist = document.querySelector(`#${nodeId} .checklist`);
+        if (!checklist) return;
+        const count = checklist.querySelectorAll(".checklist-item").length;
+        const label = document.createElement("label");
+        label.classList.add("checklist-item");
+        label.id = `${nodeId}-item-${count}`;
+        label.innerHTML = `
+            <input type="checkbox" onchange="onChecklistChange(this, '${nodeId}')">
+            <span ondblclick="event.stopPropagation(); event.preventDefault(); makeEditable(this)">${text}</span>
+            <span class="checklist-delete" onclick="deleteChecklistItem(event, this)">&#x2715;</span>
+        `;
+        const addBtn = checklist.querySelector(".checklist-add");
+        checklist.insertBefore(label, addBtn);
+        onChecklistChange(null, nodeId);
+    }
+
+    // --- Clock nodes ---
+    const clocks = {}; // id -> { remaining, total, interval, running }
+
+    async function addClockNode() {
+        const raw = await showModal("Set timer duration", "e.g. 25 or 1:30 (min:sec)", "Add Timer");
+        if (!raw) return;
+
+        let totalSeconds;
+        if (raw.includes(":")) {
+            const [m, s] = raw.split(":").map(Number);
+            totalSeconds = (m || 0) * 60 + (s || 0);
+        } else {
+            totalSeconds = Math.round(parseFloat(raw) * 60);
+        }
+        if (!totalSeconds || totalSeconds <= 0) return;
+
+        const { node, id } = spawnNode(["clock-node"]);
+        clocks[id] = { remaining: totalSeconds, total: totalSeconds, interval: null, running: false };
+
+        node.innerHTML = `
+            <div class="clock-label">⏱ TIMER</div>
+            <div class="clock-display" id="cd-${id}">${formatTime(totalSeconds)}</div>
+            <div class="clock-controls">
+                <button class="clock-btn" id="cb-start-${id}" onclick="toggleClock('${id}')">Start</button>
+                <button class="clock-btn" id="cb-reset-${id}" onclick="resetClock('${id}')">Reset</button>
+            </div>
+            <div class="node-status">Waiting</div>
+        `;
+
+        node.addEventListener("dblclick", (e) => {
+            e.stopPropagation();
+            if (e.target.closest(".clock-display")) editClockDuration(id);
+        });
+        attachNode(node);
+    }
+
+    function formatTime(s) {
+        const m = Math.floor(s / 60);
+        const sec = s % 60;
+        return `${String(m).padStart(2, "0")}:${String(sec).padStart(2, "0")}`;
+    }
+
+    function toggleClock(id) {
+        const c = clocks[id];
+        if (!c || c.remaining <= 0) return;
+        if (c.running) {
+            clearInterval(c.interval);
+            c.running = false;
+            document.getElementById("cb-start-" + id).textContent = "Resume";
+            document.getElementById("cb-start-" + id).classList.remove("running");
+        } else {
+            c.running = true;
+            document.getElementById("cb-start-" + id).textContent = "Pause";
+            document.getElementById("cb-start-" + id).classList.add("running");
+            c.interval = setInterval(() => tickClock(id), 1000);
+        }
+    }
+
+    function tickClock(id) {
+        const c = clocks[id];
+        if (!c) return;
+        c.remaining--;
+        const display  = document.getElementById("cd-" + id);
+        const node     = document.getElementById(id);
+        if (display) display.textContent = formatTime(c.remaining);
+
+        if (c.remaining <= 0) {
+            clearInterval(c.interval);
+            c.running = false;
+            if (display) display.classList.add("fired");
+            const startBtn = document.getElementById("cb-start-" + id);
+            if (startBtn) { startBtn.textContent = "Done"; startBtn.classList.remove("running"); }
+            if (node) {
+                node.classList.add("completed");
+                const st = node.querySelector(".node-status");
+                if (st) st.textContent = "Fired!";
+            }
+            evaluateAll();
+        }
+    }
+
+    function resetClock(id) {
+        const c = clocks[id];
+        if (!c) return;
+        clearInterval(c.interval);
+        c.running = false;
+        c.remaining = c.total;
+        const display = document.getElementById("cd-" + id);
+        if (display) { display.textContent = formatTime(c.total); display.classList.remove("fired"); }
+        const startBtn = document.getElementById("cb-start-" + id);
+        if (startBtn) { startBtn.textContent = "Start"; startBtn.classList.remove("running"); }
+        const node = document.getElementById(id);
+        if (node) {
+            node.classList.remove("completed");
+            const st = node.querySelector(".node-status");
+            if (st) st.textContent = "Waiting";
+        }
+        evaluateAll();
+    }
+
+    async function editClockDuration(id) {
+        const c = clocks[id];
+        if (!c) return;
+
+        const raw = await showModal("Change timer duration", "e.g. 25 or 1:30 (min:sec)", "Set");
+        if (!raw) return;
+
+        let totalSeconds;
+        if (raw.includes(":")) {
+            const [m, s] = raw.split(":").map(Number);
+            totalSeconds = (m || 0) * 60 + (s || 0);
+        } else {
+            totalSeconds = Math.round(parseFloat(raw) * 60);
+        }
+        if (!totalSeconds || totalSeconds <= 0) return;
+
+        clearInterval(c.interval);
+        c.running = false;
+        c.total = totalSeconds;
+        c.remaining = totalSeconds;
+
+        const display = document.getElementById("cd-" + id);
+        if (display) { display.textContent = formatTime(totalSeconds); display.classList.remove("fired"); }
+        const startBtn = document.getElementById("cb-start-" + id);
+        if (startBtn) { startBtn.textContent = "Start"; startBtn.classList.remove("running"); }
+        const node = document.getElementById(id);
+        if (node) {
+            node.classList.remove("completed");
+            const st = node.querySelector(".node-status");
+            if (st) st.textContent = "Waiting";
+        }
+        evaluateAll();
+    }
+
+    // --- Wire rendering ---
+    function getNodeCenter(nodeId, side) {
+        const node = document.getElementById(nodeId);
+        if (!node) return null;
+        const x = parseInt(node.style.left) || 0;
+        const y = parseInt(node.style.top) || 0;
+        const w = node.offsetWidth;
+        const h = node.offsetHeight;
+        if (side === "right") return { x: x + w, y: y + h / 2 };
+        return { x: x, y: y + h / 2 };
+    }
+
+    function renderWires() {
+        const svg = document.getElementById("wire-svg");
+        svg.innerHTML = `<defs>
+            ${connections.map(c => `
+            <marker id="arrow-${c.id}" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+                <polygon points="0 0, 6 3, 0 6" fill="${selectedConnId === c.id ? '#ffffff' : c.color}"/>
+            </marker>`).join("")}
+        </defs>`;
+
+        connections.forEach(c => {
+            const src = getNodeCenter(c.sourceId, "right");
+            const tgt = getNodeCenter(c.targetId, "left");
+            if (!src || !tgt) return;
+
+            const dx = Math.max(60, Math.abs(tgt.x - src.x) * 0.5);
+            const d = `M ${src.x} ${src.y} C ${src.x + dx} ${src.y} ${tgt.x - dx} ${tgt.y} ${tgt.x} ${tgt.y}`;
+            const color = selectedConnId === c.id ? "#ffffff" : c.color;
+            const width = selectedConnId === c.id ? 3 : 2;
+
+            // Wide invisible hit target
+            const hit = document.createElementNS("http://www.w3.org/2000/svg", "path");
+            hit.setAttribute("d", d);
+            hit.setAttribute("stroke", "transparent");
+            hit.setAttribute("stroke-width", "14");
+            hit.setAttribute("fill", "none");
+            hit.style.pointerEvents = "stroke";
+            hit.style.cursor = "pointer";
+            hit.addEventListener("click", (e) => { e.stopPropagation(); selectWire(c.id); });
+
+            // Visible wire
+            const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+            path.setAttribute("d", d);
+            path.setAttribute("stroke", color);
+            path.setAttribute("stroke-width", width);
+            path.setAttribute("fill", "none");
+            path.setAttribute("stroke-linecap", "round");
+            path.setAttribute("marker-end", `url(#arrow-${c.id})`);
+            path.style.pointerEvents = "none";
+
+            svg.appendChild(hit);
+            svg.appendChild(path);
+        });
+    }
+
+    // --- Toggle complete ---
+    function toggleComplete(node) {
+        if (node.classList.contains("locked")) return;
+        const status = node.querySelector(".node-status");
+        if (node.classList.contains("completed")) {
+            node.classList.remove("completed");
+            if (status) status.textContent = "Unlocked";
+        } else {
+            node.classList.add("completed");
+            if (status) status.textContent = "Completed";
+        }
+        evaluateAll();
+    }
+
+    // --- Checklist ---
+    function onChecklistChange(checkbox, nodeId) {
+        const node = document.getElementById(nodeId);
+        if (checkbox) {
+            if (node.classList.contains("locked")) { checkbox.checked = false; return; }
+            checkbox.closest(".checklist-item").classList.toggle("checked", checkbox.checked);
+        }
+        const all  = node.querySelectorAll(".checklist input[type='checkbox']");
+        const done = node.querySelectorAll(".checklist input[type='checkbox']:checked");
+        const status = node.querySelector(".node-status");
+        if (done.length === all.length) {
+            node.classList.remove("locked"); node.classList.add("completed");
+            if (status) status.textContent = "Completed";
+        } else {
+            node.classList.remove("completed");
+            if (status) status.textContent = `${done.length}/${all.length} done`;
+        }
+        evaluateAll();
+    }
+
+    // --- Logic evaluation ---
+    function getOutput(id) {
+        const n = document.getElementById(id);
+        return n ? n.classList.contains("completed") : false;
+    }
+
+    function evaluateAll() {
+        for (let i = 0; i < 8; i++) evaluatePass();
+    }
+
+    function evaluatePass() {
+        const incoming = {};
+        connections.forEach(c => {
+            if (!incoming[c.targetId]) incoming[c.targetId] = [];
+            incoming[c.targetId].push(c.sourceId);
+        });
+
+        document.querySelectorAll(".node").forEach(node => {
+            const sources = incoming[node.id];
+            if (!sources || sources.length === 0) {
+                // No inputs: free tasks/end nodes, but gates stay off
+                if (!node.dataset.gateType && !node.classList.contains("start-node")) {
+                    node.classList.remove("locked");
+                    const status = node.querySelector(".node-status");
+                    if (status && status.textContent === "Locked") status.textContent = "Unlocked";
+                }
+                return;
+            }
+
+            const signals = sources.map(sid => getOutput(sid));
+            const gateType = node.dataset.gateType;
+            const status = node.querySelector(".node-status");
+
+            if (gateType) {
+                let result;
+                if (gateType === "AND")      result = signals.every(Boolean);
+                else if (gateType === "OR")  result = signals.some(Boolean);
+                else if (gateType === "XOR") result = signals.filter(Boolean).length === 1;
+                node.classList.toggle("completed", result);
+                node.classList.toggle("locked", !result);
+                if (status) status.textContent = result ? "1" : "0";
+
+            } else if (node.classList.contains("end-node")) {
+                const allOn = signals.every(Boolean);
+                node.classList.toggle("completed", allOn);
+                if (status) status.textContent = allOn ? "Done!" : "Waiting";
+
+            } else {
+                const allOn = signals.every(Boolean);
+                if (!allOn) {
+                    node.classList.add("locked");
+                    node.classList.remove("completed");
+                    if (status) status.textContent = "Locked";
+                } else {
+                    node.classList.remove("locked");
+                    if (status && status.textContent === "Locked") status.textContent = "Unlocked";
+                }
+            }
+        });
+    }
+
+    // --- Settings ---
+    function openSettings() {
+        document.getElementById("settings-panel").classList.add("visible");
+        document.getElementById("settings-overlay").classList.add("visible");
+    }
+    function closeSettings() {
+        document.getElementById("settings-panel").classList.remove("visible");
+        document.getElementById("settings-overlay").classList.remove("visible");
+    }
+
+    function updateGridSize(val) {
+        GRID = parseInt(val);
+        document.getElementById("grid-size-label").textContent = val + "px";
+        const half = GRID / 2;
+        const arm = Math.round(GRID * 0.21);
+        const svgStr = `<svg xmlns="http://www.w3.org/2000/svg" width="${GRID}" height="${GRID}">` +
+            `<line x1="${half}" y1="${half - arm}" x2="${half}" y2="${half + arm}" stroke="white" stroke-width="1.5" stroke-opacity="0.22"/>` +
+            `<line x1="${half - arm}" y1="${half}" x2="${half + arm}" y2="${half}" stroke="white" stroke-width="1.5" stroke-opacity="0.22"/>` +
+            `</svg>`;
+        const canvas = document.getElementById("canvas");
+        canvas.style.backgroundImage = `url("data:image/svg+xml,${encodeURIComponent(svgStr)}")`;
+        canvas.style.backgroundSize = `${GRID}px ${GRID}px`;
+    }
+
+    function setCanvasBg(swatch) {
+        document.querySelectorAll(".bg-swatch").forEach(s => s.classList.remove("active"));
+        swatch.classList.add("active");
+        document.getElementById("canvas").style.backgroundColor = swatch.dataset.bg;
+        _resetBgPickerWrap();
+    }
+
+    function setCanvasBgFromPicker(hex) {
+        document.querySelectorAll(".bg-swatch").forEach(s => s.classList.remove("active"));
+        document.getElementById("canvas").style.backgroundColor = hex;
+        document.querySelectorAll(".custom-bg-picker").forEach(p => {
+            p.value = hex;
+            const wrap = p.closest(".color-picker-wrap");
+            if (wrap) { wrap.style.background = hex; wrap.style.color = isLight(hex) ? "#111" : "#eee"; }
+        });
+    }
+
+    function _resetBgPickerWrap() {
+        document.querySelectorAll(".custom-bg-picker").forEach(p => {
+            const wrap = p.closest(".color-picker-wrap");
+            if (wrap) { wrap.style.background = ""; wrap.style.color = ""; }
+        });
+    }
+
+    function resetAll() {
+        // Canvas background
+        const firstBg = document.querySelector(".bg-swatch");
+        if (firstBg) setCanvasBg(firstBg);
+
+        // UI theme
+        resetThemeColor();
+
+        // Default accent
+        const firstAccent = document.querySelector("#color-picker-section .color-swatch");
+        if (firstAccent) setAccent(firstAccent);
+
+        // Reset custom node picker wraps
+        document.querySelectorAll(".custom-node-picker").forEach(p => {
+            p.value = "#7a30b0";
+            const wrap = p.closest(".color-picker-wrap");
+            if (wrap) { wrap.style.background = ""; wrap.style.color = ""; }
+        });
+
+        // Grid size
+        updateGridSize(48);
+        const gridInput = document.getElementById("grid-size-input");
+        if (gridInput) { gridInput.value = 48; document.getElementById("grid-size-label").textContent = "48px"; }
+
+        // Snap
+        document.getElementById("snap-toggle").checked = false;
+    }
+
+    // --- Export ---
+    function exportFlowchart() {
+        const nodes = [];
+        document.querySelectorAll(".node").forEach(node => {
+            const clone = node.cloneNode(true);
+            clone.querySelector(".resize-handle")?.remove();
+            const type = node.classList.contains("start-node") ? "start"
+                : node.classList.contains("end-node") ? "end"
+                : node.classList.contains("gate-node") ? "gate"
+                : node.classList.contains("clock-node") ? "clock"
+                : node.classList.contains("note-node") ? "note"
+                : node.querySelector(".checklist") ? "checklist"
+                : "task";
+            const nd = {
+                id: node.id, type,
+                x: parseInt(node.style.left) || 0,
+                y: parseInt(node.style.top) || 0,
+                color: node.style.borderColor || currentAccent,
+                width: node.style.width || null,
+                minHeight: node.style.minHeight || null,
+                classes: Array.from(node.classList).filter(c => !["node","selected","dragging","connect-source","locked"].includes(c)),
+                completed: node.classList.contains("completed"),
+                html: clone.innerHTML
+            };
+            if (node.dataset.gateType) nd.gateType = node.dataset.gateType;
+            if (type === "clock" && clocks[node.id]) nd.clockData = { total: clocks[node.id].total };
+            nodes.push(nd);
+        });
+        const payload = { version: 1, name: flowchartName, gridSize: GRID, connections, nodes };
+        const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url; a.download = flowchartName + ".json";
+        document.body.appendChild(a); a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    }
+
+    // --- Import ---
+    function importFlowchart(input) {
+        const file = input.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            try { loadCanvasData(JSON.parse(e.target.result)); }
+            catch { alert("Invalid JSON file"); }
+        };
+        reader.readAsText(file);
+        input.value = "";
+    }
+
+    function loadCanvasData(data) {
+        document.querySelectorAll(".node").forEach(n => n.remove());
+        connections = []; connCounter = 0; nodeCounter = 0;
+        Object.keys(clocks).forEach(k => { clearInterval(clocks[k].interval); delete clocks[k]; });
+
+        if (data.gridSize) {
+            const input = document.getElementById("grid-size-input");
+            if (input) { input.value = data.gridSize; document.getElementById("grid-size-label").textContent = data.gridSize + "px"; }
+            updateGridSize(data.gridSize);
+        }
+
+        (data.nodes || []).forEach(nd => {
+            const node = document.createElement("div");
+            node.classList.add("node", ...(nd.classes || []).filter(c => c !== "node"));
+            node.id = nd.id;
+            node.style.left = nd.x + "px";
+            node.style.top  = nd.y + "px";
+            node.style.borderColor = nd.color || currentAccent;
+            if (nd.width) node.style.width = nd.width;
+            if (nd.minHeight) node.style.minHeight = nd.minHeight;
+            node.innerHTML = nd.html || "";
+            if (nd.completed) node.classList.add("completed");
+            if (nd.gateType) node.dataset.gateType = nd.gateType;
+
+            const titleEl = node.querySelector(".node-title");
+            if (titleEl) titleEl.addEventListener("dblclick", e => { e.stopPropagation(); makeEditable(e.target); });
+
+            if (nd.type === "task") {
+                node.addEventListener("dblclick", e => {
+                    if (!e.target.closest("input") && !e.target.closest(".node-title")) toggleComplete(node);
+                });
+            } else if (nd.type === "note") {
+                const nt = node.querySelector(".note-text");
+                if (nt) nt.addEventListener("dblclick", e => { e.stopPropagation(); makeEditable(e.target); });
+            } else if (nd.type === "clock") {
+                node.addEventListener("dblclick", e => { e.stopPropagation(); if (e.target.closest(".clock-display")) editClockDuration(node.id); });
+                const total = nd.clockData?.total || 0;
+                if (total > 0) clocks[node.id] = { remaining: total, total, interval: null, running: false };
+            }
+
+            attachNode(node);
+            const num = parseInt(nd.id.replace("node-", "")) || 0;
+            if (num > nodeCounter) nodeCounter = num;
+        });
+
+        connections = data.connections || [];
+        connCounter = connections.reduce((max, c) => Math.max(max, parseInt(c.id.replace("conn-", "")) || 0), 0);
+        renderWires();
+        evaluateAll();
+    }
+
+    // --- Save ---
+    function saveFlowchart() {
+        const nodes = [];
+        document.querySelectorAll(".node").forEach(node => {
+            nodes.push({
+                id: node.id,
+                x: parseInt(node.style.left),
+                y: parseInt(node.style.top),
+                title: node.querySelector(".node-title, .gate-label, .start-label, .end-label, .note-text")?.textContent?.trim(),
+                completed: node.classList.contains("completed")
+            });
+        });
+        fetch("/save_flowchart", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ id: flowchartId, nodes, connections })
+        }).then(r => r.json()).then(data => alert(data.message));
+    }
+</script>
+
+</body>
+</html>

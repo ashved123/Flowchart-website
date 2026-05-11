@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Dashboard — Flowchart Builder</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            background: #050507;
+            color: #f0f0f0;
+            font-family: sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        header {
+            background: linear-gradient(180deg, #0c0c10 0%, #060608 100%);
+            border-bottom: 1px solid #4a1a70;
+            padding: 16px 32px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.7);
+        }
+        header h1 { font-size: 1.1rem; color: #eee; font-weight: 600; }
+        header h1 span { color: #7a30b0; }
+
+        .header-right { display: flex; align-items: center; gap: 16px; }
+        .header-right span { font-size: 0.85rem; color: #666; }
+
+        .logout-btn {
+            background: none;
+            border: 1px solid #3a1a50;
+            border-radius: 6px;
+            color: #888;
+            font-size: 0.82rem;
+            padding: 6px 14px;
+            cursor: pointer;
+            transition: all 0.15s;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .logout-btn:hover { border-color: #7a30b0; color: #ccc; }
+
+        main {
+            flex: 1;
+            padding: 48px 40px;
+            max-width: 1100px;
+            width: 100%;
+            margin: 0 auto;
+        }
+
+        .page-title {
+            font-size: 1.4rem;
+            color: #ccc;
+            margin-bottom: 32px;
+            font-weight: 500;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 18px;
+        }
+
+        .new-card {
+            background: transparent;
+            border: 2px dashed #2a1a40;
+            border-radius: 10px;
+            height: 140px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            cursor: pointer;
+            text-decoration: none;
+            color: #3a2a50;
+            font-size: 0.88rem;
+            transition: all 0.18s;
+        }
+        .new-card:hover {
+            border-color: #7a30b0;
+            color: #9a60d0;
+            background: rgba(122,48,176,0.05);
+        }
+        .new-card .plus { font-size: 2rem; line-height: 1; }
+
+        .fc-card {
+            background: linear-gradient(150deg, #111118 0%, #0c0c12 100%);
+            border: 1px solid #2a1a40;
+            border-radius: 10px;
+            height: 140px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 20px;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.18s;
+            box-shadow: 0 3px 12px rgba(0,0,0,0.5);
+        }
+        .fc-card:hover {
+            border-color: #7a30b0;
+            transform: translateY(-3px);
+            box-shadow: 0 10px 28px rgba(0,0,0,0.7), 0 0 12px rgba(122,48,176,0.15);
+        }
+        .fc-card-name {
+            font-size: 1rem;
+            color: #ddd;
+            font-weight: 500;
+            word-break: break-word;
+        }
+        .fc-card-meta {
+            font-size: 0.75rem;
+            color: #3a2a50;
+        }
+
+        .empty-state {
+            grid-column: 1 / -1;
+            text-align: center;
+            color: #333;
+            padding: 60px 0;
+            font-size: 0.95rem;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Flowchart <span>Builder</span></h1>
+        <div class="header-right">
+            <span>{{ username }}</span>
+            <a href="/logout" class="logout-btn">Sign out</a>
+        </div>
+    </header>
+
+    <main>
+        <div class="page-title">Your Flowcharts</div>
+        <div class="grid">
+            <a href="/new_flowchart" class="new-card">
+                <span class="plus">+</span>
+                <span>New Flowchart</span>
+            </a>
+
+            {% if flowcharts %}
+                {% for fc in flowcharts %}
+                <a href="/canvas/{{ fc.id }}" class="fc-card">
+                    <div class="fc-card-name">{{ fc.name }}</div>
+                    <div class="fc-card-meta">#{{ fc.id }}</div>
+                </a>
+                {% endfor %}
+            {% else %}
+                <div class="empty-state">No flowcharts yet — create your first one.</div>
+            {% endif %}
+        </div>
+    </main>
+</body>
+</html>

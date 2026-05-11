@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Register — Flowchart Builder</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            background: #050507;
+            color: #f0f0f0;
+            font-family: sans-serif;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .card {
+            background: linear-gradient(160deg, #111116 0%, #0a0a0e 100%);
+            border: 1px solid #4a1a70;
+            border-radius: 12px;
+            padding: 40px 36px;
+            width: 360px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            box-shadow: 0 24px 60px rgba(0,0,0,0.8), 0 4px 20px rgba(90,32,128,0.2);
+        }
+
+        .card-header { text-align: center; }
+        .card-header h1 { font-size: 1.5rem; color: #eee; margin-bottom: 6px; }
+        .card-header p { font-size: 0.85rem; color: #555; }
+
+        .field { display: flex; flex-direction: column; gap: 6px; }
+        .field label { font-size: 0.8rem; color: #777; }
+        .field input {
+            background: #0d0d10;
+            border: 1px solid #3a1a50;
+            border-radius: 7px;
+            padding: 11px 14px;
+            color: #eee;
+            font-size: 0.95rem;
+            outline: none;
+            transition: border-color 0.15s, box-shadow 0.15s;
+        }
+        .field input:focus {
+            border-color: #7a30b0;
+            box-shadow: 0 0 0 3px rgba(122,48,176,0.15);
+        }
+
+        .error {
+            background: rgba(180,40,40,0.12);
+            border: 1px solid #6a2020;
+            border-radius: 6px;
+            padding: 10px 14px;
+            font-size: 0.83rem;
+            color: #cc7070;
+        }
+
+        .submit-btn {
+            background: linear-gradient(160deg, #550090, #3d0060);
+            border: 1px solid #7a30b0;
+            border-radius: 7px;
+            color: #eee;
+            font-size: 0.95rem;
+            padding: 12px;
+            cursor: pointer;
+            transition: all 0.18s;
+            box-shadow: 0 4px 14px rgba(100,0,160,0.35);
+        }
+        .submit-btn:hover {
+            background: linear-gradient(160deg, #6600aa, #4a0078);
+            box-shadow: 0 6px 20px rgba(130,0,200,0.45);
+            transform: translateY(-1px);
+        }
+        .submit-btn:active { transform: translateY(0); }
+
+        .footer-link {
+            text-align: center;
+            font-size: 0.82rem;
+            color: #555;
+        }
+        .footer-link a { color: #8a45c0; text-decoration: none; }
+        .footer-link a:hover { color: #b070e0; text-decoration: underline; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <div class="card-header">
+            <h1>Create Account</h1>
+            <p>Join Flowchart Builder</p>
+        </div>
+
+        {% if error %}
+        <div class="error">{{ error }}</div>
+        {% endif %}
+
+        <form method="POST" action="/register" style="display:flex;flex-direction:column;gap:16px;">
+            <div class="field">
+                <label for="username">Username</label>
+                <input type="text" id="username" name="username" placeholder="choose a username" autocomplete="username" required>
+            </div>
+            <div class="field">
+                <label for="email">Email</label>
+                <input type="email" id="email" name="email" placeholder="you@example.com" autocomplete="email" required>
+            </div>
+            <div class="field">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" placeholder="••••••••" autocomplete="new-password" required>
+            </div>
+            <button type="submit" class="submit-btn">Create Account</button>
+        </form>
+
+        <div class="footer-link">
+            Already have an account? <a href="/login">Sign in</a>
+        </div>
+    </div>
+</body>
+</html>
