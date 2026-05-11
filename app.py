@@ -6,9 +6,10 @@ from functools import wraps
 from werkzeug.security import generate_password_hash, check_password_hash
 
 app = Flask(__name__)
-app.secret_key = "dev-secret-change-in-production"
+app.secret_key = os.environ.get("SECRET_KEY", "dev-secret-change-in-production")
 
-DB_PATH = "flowchart.db"
+# On Render, mount a disk at /data and set DB_PATH=/data/flowchart.db
+DB_PATH = os.environ.get("DB_PATH", "flowchart.db")
 
 
 def get_db():
@@ -24,7 +25,8 @@ def init_db():
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             username TEXT UNIQUE NOT NULL,
             email TEXT UNIQUE NOT NULL,
-            password_hash TEXT NOT NULL
+            password_hash TEXT NOT NULL,
+            preferences TEXT DEFAULT '{}'
         );
         CREATE TABLE IF NOT EXISTS flowcharts (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -35,8 +37,22 @@ def init_db():
             FOREIGN KEY (user_id) REFERENCES users(id)
         );
     """)
+    try:
+        db.execute("ALTER TABLE users ADD COLUMN preferences TEXT DEFAULT '{}'")
+    except Exception:
+        pass
     db.commit()
     db.close()
+
+
+def get_user_prefs():
+    db = get_db()
+    row = db.execute("SELECT preferences FROM users WHERE id = ?", (session["user_id"],)).fetchone()
+    db.close()
+    try:
+        return json.loads(row["preferences"]) if row and row["preferences"] else {}
+    except Exception:
+        return {}
 
 
 def login_required(f):
@@ -119,7 +135,7 @@ def dashboard():
         (session["user_id"],)
     ).fetchall()
     db.close()
-    return render_template("dashboard.html", flowcharts=flowcharts, username=session["username"])
+    return render_template("dashboard.html", flowcharts=flowcharts, username=session["username"], user_prefs=get_user_prefs())
 
 
 @app.route("/new_flowchart")
@@ -156,7 +172,114 @@ def canvas(flowchart_id):
     db.close()
     if not fc:
         return redirect(url_for("dashboard"))
-    return render_template("canvas.html", flowchart_name=fc["name"], flowchart_id=flowchart_id)
+    saved_data = {
+        "nodes": json.loads(fc["nodes"]) if fc["nodes"] else [],
+        "connections": json.loads(fc["connections"]) if fc["connections"] else []
+    }
+    return render_template("canvas.html", flowchart_name=fc["name"], flowchart_id=flowchart_id, saved_data=saved_data, user_prefs=get_user_prefs())
+
+
+@app.route("/rename_flowchart", methods=["POST"])
+@login_required
+def rename_flowchart():
+    data = request.get_json()
+    db = get_db()
+    fc = db.execute("SELECT id FROM flowcharts WHERE id = ? AND user_id = ?",
+                    (data.get("id"), session["user_id"])).fetchone()
+    if not fc:
+        db.close()
+        return jsonify({"error": "Not found"}), 404
+    name = data.get("name", "").strip()
+    if not name:
+        db.close()
+        return jsonify({"error": "Name cannot be empty"}), 400
+    db.execute("UPDATE flowcharts SET name = ? WHERE id = ?", (name, data.get("id")))
+    db.commit()
+    db.close()
+    return jsonify({"ok": True})
+
+
+@app.route("/delete_flowchart", methods=["POST"])
+@login_required
+def delete_flowchart():
+    data = request.get_json()
+    db = get_db()
+    fc = db.execute("SELECT id FROM flowcharts WHERE id = ? AND user_id = ?",
+                    (data.get("id"), session["user_id"])).fetchone()
+    if not fc:
+        db.close()
+        return jsonify({"error": "Not found"}), 404
+    db.execute("DELETE FROM flowcharts WHERE id = ?", (data.get("id"),))
+    db.commit()
+    db.close()
+    return jsonify({"ok": True})
+
+
+@app.route("/update_account", methods=["POST"])
+@login_required
+def update_account():
+    data = request.get_json()
+    action = data.get("action")
+    db = get_db()
+    user = db.execute("SELECT * FROM users WHERE id = ?", (session["user_id"],)).fetchone()
+
+    if action == "change_password":
+        if not check_password_hash(user["password_hash"], data.get("current_password", "")):
+            db.close()
+            return jsonify({"error": "Current password is incorrect."}), 400
+        new_pw = data.get("new_password", "")
+        if len(new_pw) < 6:
+            db.close()
+            return jsonify({"error": "New password must be at least 6 characters."}), 400
+        db.execute("UPDATE users SET password_hash = ? WHERE id = ?",
+                   (generate_password_hash(new_pw), session["user_id"]))
+        db.commit()
+        db.close()
+        return jsonify({"ok": True, "message": "Password updated."})
+
+    if action == "change_email":
+        if not check_password_hash(user["password_hash"], data.get("password", "")):
+            db.close()
+            return jsonify({"error": "Password is incorrect."}), 400
+        new_email = data.get("new_email", "").strip().lower()
+        if not new_email or "@" not in new_email:
+            db.close()
+            return jsonify({"error": "Invalid email address."}), 400
+        try:
+            db.execute("UPDATE users SET email = ? WHERE id = ?", (new_email, session["user_id"]))
+            db.commit()
+            db.close()
+            return jsonify({"ok": True, "message": "Email updated."})
+        except Exception:
+            db.close()
+            return jsonify({"error": "Email already in use."}), 400
+
+    db.close()
+    return jsonify({"error": "Unknown action."}), 400
+
+
+@app.route("/delete_account", methods=["POST"])
+@login_required
+def delete_account():
+    db = get_db()
+    db.execute("DELETE FROM flowcharts WHERE user_id = ?", (session["user_id"],))
+    db.execute("DELETE FROM users WHERE id = ?", (session["user_id"],))
+    db.commit()
+    db.close()
+    session.clear()
+    return jsonify({"ok": True})
+
+
+@app.route("/save_preferences", methods=["POST"])
+@login_required
+def save_preferences():
+    data = request.get_json()
+    db = get_db()
+    db.execute("UPDATE users SET preferences = ? WHERE id = ?",
+               (json.dumps(data), session["user_id"]))
+    db.commit()
+    db.close()
+    return jsonify({"ok": True})
 
 
 @app.route("/save_flowchart", methods=["POST"])

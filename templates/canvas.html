@@ -37,7 +37,9 @@
             border-bottom: 1px solid #2a1a40;
             line-height: 1.4;
         }
-        #toolbar h2 span { color: #ccc; font-size: 0.95rem; display: block; margin-top: 2px; }
+        #toolbar h2 span { color: #ccc; font-size: 0.95rem; display: block; margin-top: 2px; border-radius: 3px; transition: background 0.15s; }
+        #toolbar h2 span:hover { background: rgba(122,48,176,0.12); cursor: text; }
+        #toolbar h2 span[contenteditable="true"] { outline: 1px solid #7a30b0; background: rgba(0,0,0,0.3); padding: 1px 4px; cursor: text; }
 
         .toolbar-btn {
             background: linear-gradient(160deg, #1c1c24, #101016);
@@ -267,6 +269,117 @@
         #modal input[type="text"]:focus { border-color: #7a30b0; }
 
         #modal-buttons { display: flex; gap: 10px; justify-content: flex-end; }
+
+        /* Leave confirmation dialog */
+        #leave-overlay {
+            display: none; position: fixed; inset: 0;
+            background: rgba(0,0,0,0.6); z-index: 200;
+            align-items: center; justify-content: center;
+        }
+        #leave-overlay.visible { display: flex; }
+        #leave-dialog {
+            background: linear-gradient(160deg, #161618, #0f0f13);
+            border: 1px solid #5a2080;
+            border-radius: 10px;
+            padding: 28px 32px;
+            min-width: 320px;
+            display: flex; flex-direction: column; gap: 18px;
+            box-shadow: 0 24px 60px rgba(0,0,0,0.85), 0 4px 20px rgba(90,32,128,0.25);
+        }
+        #leave-dialog h3 { font-size: 1rem; color: #ccc; font-weight: 600; }
+        #leave-dialog p { font-size: 0.84rem; color: #666; line-height: 1.5; }
+        #leave-buttons { display: flex; gap: 10px; justify-content: flex-end; }
+
+        body.light-mode #leave-dialog {
+            background: linear-gradient(160deg, #d8d0c4, #d0c8bc);
+            border-color: #a8957e;
+            box-shadow: 0 24px 60px rgba(50,30,10,0.18), 0 4px 20px rgba(50,30,10,0.1);
+        }
+        body.light-mode #leave-dialog h3 { color: #2e2018; }
+        body.light-mode #leave-dialog p { color: #7a6858; }
+
+        #fc-rename-overlay {
+            display: none; position: fixed; inset: 0;
+            background: rgba(0,0,0,0.6); z-index: 200;
+            align-items: center; justify-content: center;
+        }
+        #fc-rename-overlay.visible { display: flex; }
+        #fc-rename-dialog {
+            background: linear-gradient(160deg, #161618, #0f0f13);
+            border: 1px solid #5a2080;
+            border-radius: 10px;
+            padding: 28px 32px;
+            min-width: 320px;
+            display: flex; flex-direction: column; gap: 14px;
+            box-shadow: 0 24px 60px rgba(0,0,0,0.85), 0 4px 20px rgba(90,32,128,0.25);
+        }
+        #fc-rename-dialog h3 { font-size: 1rem; color: #ccc; font-weight: 600; }
+        #fc-rename-input {
+            background: #0d0d0f; border: 1px solid #3a1a50;
+            border-radius: 6px; padding: 10px 14px;
+            color: #eee; font-size: 0.95rem; outline: none;
+            transition: border-color 0.15s;
+        }
+        #fc-rename-input:focus { border-color: #7a30b0; }
+        #fc-rename-buttons { display: flex; gap: 10px; justify-content: flex-end; }
+        body.light-mode #fc-rename-dialog {
+            background: linear-gradient(160deg, #d8d0c4, #d0c8bc);
+            border-color: #a8957e;
+            box-shadow: 0 24px 60px rgba(50,30,10,0.18), 0 4px 20px rgba(50,30,10,0.1);
+        }
+        body.light-mode #fc-rename-dialog h3 { color: #2e2018; }
+        body.light-mode #fc-rename-input { background: #c9bfb3; border-color: #a8957e; color: #261e16; }
+
+        #hotkeys-overlay {
+            display: none; position: fixed; inset: 0;
+            background: rgba(0,0,0,0.6); z-index: 200;
+            align-items: center; justify-content: center;
+        }
+        #hotkeys-overlay.visible { display: flex; }
+        #hotkeys-dialog {
+            background: linear-gradient(160deg, #161618, #0f0f13);
+            border: 1px solid #5a2080;
+            border-radius: 10px;
+            padding: 24px 28px;
+            min-width: 340px;
+            max-width: 420px;
+            display: flex; flex-direction: column; gap: 6px;
+            box-shadow: 0 24px 60px rgba(0,0,0,0.85), 0 4px 20px rgba(90,32,128,0.25);
+        }
+        #hotkeys-header {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 10px;
+        }
+        #hotkeys-header span { font-size: 1rem; color: #ccc; font-weight: 600; }
+        #hotkeys-header .modal-btn { padding: 4px 10px; font-size: 0.8rem; }
+        .hk-section-title {
+            font-size: 0.68rem; color: #4a4a60; letter-spacing: 1.5px;
+            text-transform: uppercase; margin-top: 4px; margin-bottom: 2px;
+        }
+        .hk-row {
+            display: flex; align-items: center; justify-content: space-between;
+            gap: 12px; padding: 5px 0;
+            border-bottom: 1px solid #1e1428;
+            font-size: 0.84rem; color: #999;
+        }
+        .hk-row:last-child { border-bottom: none; }
+        .hk-keys { display: flex; gap: 4px; flex-shrink: 0; }
+        kbd {
+            background: #1a1a26; border: 1px solid #3a2a50;
+            border-radius: 4px; padding: 2px 7px;
+            font-size: 0.78rem; color: #b090d0;
+            font-family: sans-serif; white-space: nowrap;
+            box-shadow: 0 2px 0 #2a1a40;
+        }
+        body.light-mode #hotkeys-dialog {
+            background: linear-gradient(160deg, #d8d0c4, #d0c8bc);
+            border-color: #a8957e;
+            box-shadow: 0 24px 60px rgba(50,30,10,0.18), 0 4px 20px rgba(50,30,10,0.1);
+        }
+        body.light-mode #hotkeys-header span { color: #2e2018; }
+        body.light-mode .hk-section-title { color: #9a8878; }
+        body.light-mode .hk-row { color: #423424; border-bottom-color: #b0a090; }
+        body.light-mode kbd { background: #c4b8a8; border-color: #a08870; color: #3a2a1e; box-shadow: 0 2px 0 #a08870; }
         .modal-btn {
             padding: 8px 20px;
             border-radius: 6px;
@@ -289,6 +402,196 @@
             font-size: 0.75rem; color: #333;
             pointer-events: none;
         }
+
+        /* Context menu */
+        #ctx-menu {
+            position: fixed; display: none; flex-direction: column;
+            background: linear-gradient(160deg, #111118 0%, #0c0c12 100%);
+            border: 1px solid #4a1a70; border-radius: 8px;
+            padding: 6px; z-index: 200; min-width: 160px;
+            box-shadow: 0 16px 40px rgba(0,0,0,0.85), 0 4px 14px rgba(90,32,128,0.2);
+        }
+        #ctx-menu.visible { display: flex; }
+        .ctx-item {
+            padding: 8px 12px; border-radius: 5px;
+            font-size: 0.84rem; color: #bbb; cursor: pointer;
+            transition: background 0.12s, color 0.12s;
+            display: flex; align-items: center; gap: 10px;
+        }
+        .ctx-item:hover { background: rgba(122,48,176,0.18); color: #eee; }
+        .ctx-item.danger:hover { background: rgba(180,40,40,0.18); color: #ff8080; }
+        .ctx-divider { height: 1px; background: #2a1a40; margin: 4px 0; }
+
+        /* Canvas context menu (hold right-click) */
+        #canvas-ctx-menu {
+            position: fixed; display: none; flex-direction: column;
+            background: linear-gradient(160deg, #111118 0%, #0c0c12 100%);
+            border: 1px solid #4a1a70; border-radius: 8px;
+            padding: 6px; z-index: 200; min-width: 160px;
+            box-shadow: 0 16px 40px rgba(0,0,0,0.85), 0 4px 14px rgba(90,32,128,0.2);
+        }
+        #canvas-ctx-menu.visible { display: flex; }
+
+        /* Add menu */
+        #add-menu-overlay {
+            display: none; position: fixed; inset: 0; z-index: 108;
+        }
+        #add-menu-overlay.visible { display: block; }
+
+        #add-menu {
+            position: fixed;
+            background: linear-gradient(160deg, #111118 0%, #0c0c12 100%);
+            border: 1px solid #4a1a70; border-radius: 10px;
+            padding: 14px; z-index: 109;
+            display: none; flex-direction: column; gap: 5px;
+            min-width: 200px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.85), 0 4px 16px rgba(90,32,128,0.2);
+        }
+        #add-menu.visible { display: flex; }
+
+        .add-menu-header {
+            font-size: 0.72rem; color: #4a4a60; letter-spacing: 1.5px;
+            text-transform: uppercase;
+            display: flex; justify-content: space-between; align-items: center;
+            padding-bottom: 10px; border-bottom: 1px solid #2a1a40; margin-bottom: 4px;
+        }
+        .add-menu-header kbd {
+            font-size: 0.68rem; background: #1a1a24;
+            border: 1px solid #3a1a50; border-radius: 3px;
+            padding: 1px 5px; color: #444; font-family: sans-serif;
+        }
+        .add-menu-divider { height: 1px; background: #2a1a40; margin: 3px 0; }
+
+        #save-toast {
+            position: fixed;
+            bottom: 24px; right: 24px;
+            background: linear-gradient(160deg, #111118, #0c0c10);
+            border: 1px solid #2e7a3a;
+            border-radius: 8px;
+            padding: 9px 18px;
+            font-size: 0.82rem; color: #55bb66;
+            z-index: 300;
+            opacity: 0; transform: translateY(8px);
+            transition: opacity 0.2s, transform 0.2s;
+            pointer-events: none;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.6);
+        }
+        #save-toast.visible { opacity: 1; transform: translateY(0); }
+
+        /* ── Light mode (warm cozy) ── */
+        body.light-mode { background: #d8cfc4; color: #261e16; --accent: #2a2018; }
+
+        body.light-mode #toolbar {
+            background: linear-gradient(90deg, #d2c8bc 0%, #c9bfb3 100%);
+            border-right-color: #a8957e;
+            box-shadow: 4px 0 20px rgba(50,30,10,0.12);
+        }
+        body.light-mode #toolbar h2 { color: #9a8878; }
+        body.light-mode #toolbar h2 span { color: #382a1e; }
+        body.light-mode #toolbar a { color: #9a8878 !important; }
+
+        body.light-mode .toolbar-btn {
+            background: linear-gradient(160deg, #cec4b8, #c6bcb0);
+            color: #382a1e; border-color: #a8957e;
+            box-shadow: 0 2px 6px rgba(50,30,10,0.1), inset 0 1px 0 rgba(255,255,255,0.2);
+        }
+        body.light-mode .toolbar-btn:hover {
+            background: linear-gradient(160deg, #c4b9ac, #bcb0a4);
+            border-color: #806050; color: #261e16;
+            box-shadow: 0 4px 14px rgba(50,30,10,0.15);
+        }
+        body.light-mode .toolbar-btn.active {
+            background: linear-gradient(160deg, #8a6e58, #7a6048);
+            color: #f2ece4; border-color: #a88060;
+        }
+        body.light-mode .toolbar-divider { background: #b0a090; }
+
+        body.light-mode #canvas { background-color: #d2c9be; }
+
+        body.light-mode .node {
+            background: linear-gradient(150deg, #d8d0c4 0%, #d0c8bc 100%);
+            border-color: #a8957e !important;
+            box-shadow: 0 3px 14px rgba(50,30,10,0.1), inset 0 1px 0 rgba(255,255,255,0.18);
+        }
+        body.light-mode .node:hover {
+            box-shadow: 0 8px 24px rgba(50,30,10,0.14), 0 2px 6px rgba(50,30,10,0.08);
+        }
+        body.light-mode .node.dragging {
+            box-shadow: 0 24px 50px rgba(50,30,10,0.18), 0 8px 16px rgba(50,30,10,0.1);
+        }
+        body.light-mode .node-title { color: #261e16; }
+        body.light-mode .node-status { color: #907868; }
+        body.light-mode .note-text { color: #5e4c1e; }
+        body.light-mode .gate-node { background: linear-gradient(150deg, #c0cedd, #b4c2d4); border-color: #7898b8 !important; }
+        body.light-mode .start-node { background: linear-gradient(150deg, #b4d8bc, #a8ceb0); border-color: #5a9868 !important; }
+        body.light-mode .end-node { background: linear-gradient(150deg, #ddbcb8, #d4b0ac); border-color: #b06860 !important; }
+        body.light-mode .note-node { background: #d8cfa0; border-color: #a89840 !important; }
+        body.light-mode .clock-node { background: linear-gradient(150deg, #b8cede, #acbfd4); border-color: #6090b0 !important; }
+        body.light-mode .clock-label { color: #607e98; }
+        body.light-mode .clock-display { color: #345878; }
+        body.light-mode .clock-btn {
+            background: linear-gradient(160deg, #b8c8d8, #aebdce);
+            color: #284460; border-color: #7898b8;
+        }
+        body.light-mode .checklist { border-top-color: #b4a492; }
+        body.light-mode .checklist-item { color: #423424; }
+        body.light-mode .checklist-item.checked { color: #286e36; }
+        body.light-mode .checklist-add { border-color: #a8957e; color: #5a6848; }
+        body.light-mode .resize-handle { border-color: #907868; }
+        body.light-mode .node.completed { border-color: #4e9860 !important; box-shadow: 0 3px 12px rgba(40,120,60,0.12), 0 0 10px rgba(40,120,60,0.08); }
+        body.light-mode .node.locked { border-color: #b0a090 !important; opacity: 0.5; }
+        body.light-mode .gate-label { color: #284868; }
+        body.light-mode .start-label { color: #1e6030; }
+        body.light-mode .end-label { color: #903030; }
+
+        body.light-mode #settings-panel {
+            background: linear-gradient(180deg, #d2c8bc 0%, #c9bfb3 100%);
+            border-left-color: #a8957e;
+            box-shadow: -4px 0 20px rgba(50,30,10,0.12);
+        }
+        body.light-mode .settings-header { border-bottom-color: #b0a090; }
+        body.light-mode .settings-header span { color: #382a1e; }
+        body.light-mode .settings-close { color: #9a8878; }
+        body.light-mode .settings-close:hover { color: #261e16; background: #c4b9ac; }
+        body.light-mode .settings-section-title { color: #9a8878; }
+        body.light-mode .settings-divider { background: #b0a090; }
+        body.light-mode .settings-row { color: #423424; }
+        body.light-mode .settings-row label { color: #423424; }
+        body.light-mode .settings-btn {
+            background: linear-gradient(160deg, #cec4b8, #c6bcb0);
+            color: #382a1e; border-color: #a8957e;
+        }
+        body.light-mode .settings-btn:hover { background: linear-gradient(160deg, #c4b9ac, #bcb0a4); color: #261e16; }
+        body.light-mode .color-picker-wrap { background: #cec4b8; border-color: #a8957e; color: #504030; }
+        body.light-mode .theme-reset-btn { background: linear-gradient(160deg, #cec4b8, #c6bcb0); color: #7a6858; border-color: #a8957e; }
+
+        body.light-mode #modal {
+            background: linear-gradient(160deg, #d8d0c4, #d0c8bc);
+            border-color: #a8957e;
+            box-shadow: 0 24px 60px rgba(50,30,10,0.18), 0 4px 20px rgba(50,30,10,0.1);
+        }
+        body.light-mode #modal h3 { color: #2e2018; }
+        body.light-mode #modal input[type="text"] { background: #c9bfb3; border-color: #a8957e; color: #261e16; }
+        body.light-mode .modal-btn { background: linear-gradient(160deg, #cec4b8, #c6bcb0); color: #423424; border-color: #a8957e; }
+        body.light-mode .modal-btn:hover { background: linear-gradient(160deg, #c4b9ac, #bcb0a4); color: #261e16; }
+        body.light-mode .modal-btn.primary { background: linear-gradient(160deg, #3a3028, #2a2018) !important; border-color: #584840 !important; color: #f0e8de !important; box-shadow: 0 4px 14px rgba(40,25,10,0.25) !important; }
+        body.light-mode .modal-btn.primary:hover { background: linear-gradient(160deg, #4a3e32, #3a2e22) !important; box-shadow: 0 6px 18px rgba(40,25,10,0.35) !important; }
+
+        body.light-mode #ctx-menu, body.light-mode #canvas-ctx-menu, body.light-mode #add-menu {
+            background: linear-gradient(160deg, #d8d0c4, #d0c8bc);
+            border-color: #a8957e;
+            box-shadow: 0 14px 36px rgba(50,30,10,0.14), 0 4px 12px rgba(50,30,10,0.08);
+        }
+        body.light-mode .ctx-item { color: #382a1e; }
+        body.light-mode .ctx-item:hover { background: rgba(80,55,30,0.1); color: #261e16; }
+        body.light-mode .ctx-item.danger:hover { background: rgba(160,40,30,0.1); color: #882020; }
+        body.light-mode .ctx-divider, body.light-mode .add-menu-divider { background: #b0a090; }
+        body.light-mode .add-menu-header { color: #9a8878; border-bottom-color: #b0a090; }
+        body.light-mode .add-menu-header kbd { background: #c9bfb3; border-color: #a8957e; color: #7a6858; }
+        body.light-mode #hint { color: #a09080; }
+
+        .node.multi-selected { outline: 2px solid #c0a0ff; outline-offset: 3px; }
+        body.light-mode .node.multi-selected { outline-color: #6a4e38; }
 
         /* Settings */
         #settings-overlay {
@@ -337,15 +640,8 @@
         .settings-row span { font-size: 0.76rem; color: #666; width: 34px; text-align: right; }
 
         .swatch-row { display: flex; gap: 7px; flex-wrap: wrap; }
-        .bg-swatch {
-            width: 26px; height: 26px; border-radius: 5px; cursor: pointer;
-            border: 2px solid #2a1a40;
-            transition: border-color 0.15s, transform 0.15s;
-        }
-        .bg-swatch:hover { transform: scale(1.12); border-color: #5a2080; }
-        .bg-swatch.active { border-color: #c0a0ff; }
 
-        .settings-btn {
+.settings-btn {
             background: linear-gradient(160deg, #1c1c24, #101016);
             color: #d0d0d0; border: 1px solid #4a1a70; border-radius: 6px;
             padding: 9px 12px; cursor: pointer; font-size: 0.84rem;
@@ -399,8 +695,8 @@
 <body>
 
 <div id="toolbar">
-    <h2>Editing: <span>{{ flowchart_name }}</span></h2>
-    <a href="/dashboard" style="font-size:0.75rem;color:#444;text-decoration:none;padding:4px 8px;border-radius:5px;transition:color 0.15s;" onmouseover="this.style.color='#aaa'" onmouseout="this.style.color='#444'">← Dashboard</a>
+    <h2>Editing: <span id="fc-name-span" title="Double-click to rename" ondblclick="startInlineRename()">{{ flowchart_name }}</span></h2>
+    <a href="#" class="toolbar-btn" style="text-decoration:none;text-align:center;" onclick="confirmLeave(event)">← Back</a>
 
     <div id="color-picker-section">
         <label>Color</label>
@@ -432,12 +728,14 @@
     <button class="toolbar-btn" onclick="saveFlowchart()">Save</button>
     <div class="toolbar-divider"></div>
     <button class="toolbar-btn" onclick="openSettings()">⚙ Settings</button>
+    <button class="toolbar-btn" onclick="openHotkeys()">? Hotkeys</button>
 </div>
 
 <div id="canvas">
     <svg id="wire-svg"></svg>
-    <div id="hint">Click "Connect" then click two nodes to wire them · Click a wire to select · Delete removes selection</div>
+<div id="hint">Click "Connect" then click two nodes to wire them · Click a wire to select · Delete removes selection</div>
 </div>
+<div id="save-toast"></div>
 
 <div id="settings-overlay" onclick="closeSettings()"></div>
 <div id="settings-panel">
@@ -455,24 +753,15 @@
         </div>
         <div class="settings-row">
             <label for="snap-toggle">Snap to grid</label>
-            <input type="checkbox" id="snap-toggle">
+            <input type="checkbox" id="snap-toggle" onchange="savePreferences()">
         </div>
-    </div>
-
-    <div class="settings-divider"></div>
-
-    <div class="settings-section">
-        <div class="settings-section-title">Canvas Background</div>
-        <div class="swatch-row">
-            <div class="bg-swatch active" style="background:#050507" data-bg="#050507" onclick="setCanvasBg(this)" title="Void"></div>
-            <div class="bg-swatch" style="background:#06060f" data-bg="#06060f" onclick="setCanvasBg(this)" title="Deep Blue"></div>
-            <div class="bg-swatch" style="background:#09070b" data-bg="#09070b" onclick="setCanvasBg(this)" title="Dark Purple"></div>
-            <div class="bg-swatch" style="background:#060a06" data-bg="#060a06" onclick="setCanvasBg(this)" title="Forest"></div>
-            <div class="bg-swatch" style="background:#0b0807" data-bg="#0b0807" onclick="setCanvasBg(this)" title="Ember"></div>
-            <label class="color-picker-wrap" title="Pick a custom background color">
-                Custom
-                <input type="color" class="custom-bg-picker" value="#050507" oninput="setCanvasBgFromPicker(this.value)">
-            </label>
+        <div class="settings-row">
+            <label for="autosave-toggle">Auto-save (30s)</label>
+            <input type="checkbox" id="autosave-toggle" onchange="setAutoSave(this.checked)">
+        </div>
+        <div class="settings-row">
+            <label for="light-mode-toggle">Light mode</label>
+            <input type="checkbox" id="light-mode-toggle" onchange="toggleLightMode()">
         </div>
     </div>
 
@@ -521,11 +810,49 @@
         </label>
     </div>
 
+    <div class="settings-divider"></div>
+
+    <div class="settings-section">
+        <div class="settings-section-title">Flowchart</div>
+        <button class="settings-btn" onclick="openFcRenameDialog()">✎ Rename Flowchart</button>
+        <button class="settings-btn" style="border-color:#6a2020;color:#cc7070;" onmouseover="this.style.borderColor='#c04040';this.style.color='#ffaaaa'" onmouseout="this.style.borderColor='#6a2020';this.style.color='#cc7070'" onclick="deleteFlowchart()">✕ Delete Flowchart</button>
+    </div>
+
     <div class="settings-divider" style="margin-top:auto"></div>
 
     <div class="settings-section">
         <button class="settings-btn" style="border-color:#6a2020; color:#cc7070;" onmouseover="this.style.borderColor='#c04040';this.style.color='#ffaaaa'" onmouseout="this.style.borderColor='#6a2020';this.style.color='#cc7070'" onclick="resetAll()">↺ Reset All Settings</button>
     </div>
+</div>
+
+<div id="canvas-ctx-menu">
+    <div class="ctx-item" id="canvas-ctx-paste" onclick="ctxPaste()">⎘ Paste</div>
+    <div class="ctx-divider"></div>
+    <div class="ctx-item" onclick="closeCanvasCtxMenu(); openAddMenu()">+ New Node</div>
+</div>
+
+<div id="ctx-menu">
+    <div class="ctx-item" onclick="ctxCopy()">⎘ Copy</div>
+    <div class="ctx-item" onclick="ctxRename()">✎ Rename</div>
+    <div class="ctx-divider"></div>
+    <div class="ctx-item danger" onclick="ctxDelete()">✕ Delete</div>
+</div>
+
+<div id="add-menu-overlay" onclick="closeAddMenu()"></div>
+<div id="add-menu">
+    <div class="add-menu-header">
+        Add Node <kbd>Shift+A</kbd>
+    </div>
+    <button class="toolbar-btn" onclick="closeAddMenu(); addStartNode()">Start</button>
+    <button class="toolbar-btn" onclick="closeAddMenu(); addTaskNode(false)">+ Task</button>
+    <button class="toolbar-btn" onclick="closeAddMenu(); addTaskNode(true)">+ Checklist</button>
+    <button class="toolbar-btn" onclick="closeAddMenu(); addNoteNode()">Note</button>
+    <button class="toolbar-btn" onclick="closeAddMenu(); addEndNode()">End</button>
+    <div class="add-menu-divider"></div>
+    <button class="toolbar-btn" onclick="closeAddMenu(); addGateNode('AND')">AND Gate</button>
+    <button class="toolbar-btn" onclick="closeAddMenu(); addGateNode('OR')">OR Gate</button>
+    <button class="toolbar-btn" onclick="closeAddMenu(); addGateNode('XOR')">XOR Gate</button>
+    <button class="toolbar-btn" onclick="closeAddMenu(); addClockNode()">⏱ Timer</button>
 </div>
 
 <div id="modal-overlay">
@@ -539,8 +866,52 @@
     </div>
 </div>
 
+<div id="leave-overlay">
+    <div id="leave-dialog">
+        <h3>Unsaved changes</h3>
+        <p>Do you want to save before leaving?</p>
+        <div id="leave-buttons">
+            <button class="modal-btn" onclick="leaveWithoutSaving()">Don't Save</button>
+            <button class="modal-btn primary" onclick="leaveAndSave()">Save</button>
+        </div>
+    </div>
+</div>
+
+<div id="fc-rename-overlay">
+    <div id="fc-rename-dialog">
+        <h3>Rename Flowchart</h3>
+        <input type="text" id="fc-rename-input" placeholder="New name…" maxlength="80">
+        <div id="fc-rename-buttons">
+            <button class="modal-btn" onclick="closeFcRenameDialog()">Cancel</button>
+            <button class="modal-btn primary" onclick="doRenameFlowchart()">Rename</button>
+        </div>
+    </div>
+</div>
+
+<div id="hotkeys-overlay" onclick="closeHotkeys()">
+    <div id="hotkeys-dialog" onclick="event.stopPropagation()">
+        <div id="hotkeys-header">
+            <span>Keyboard Shortcuts</span>
+            <button class="modal-btn" onclick="closeHotkeys()">✕</button>
+        </div>
+        <div class="hk-section-title">Canvas</div>
+        <div class="hk-row"><div class="hk-keys"><kbd>Ctrl</kbd><kbd>S</kbd></div><span>Save flowchart</span></div>
+        <div class="hk-row"><div class="hk-keys"><kbd>Ctrl</kbd><kbd>C</kbd></div><span>Copy selected node</span></div>
+        <div class="hk-row"><div class="hk-keys"><kbd>Ctrl</kbd><kbd>V</kbd></div><span>Paste node</span></div>
+        <div class="hk-row"><div class="hk-keys"><kbd>Del</kbd></div><span>Delete selected node or connection</span></div>
+        <div class="hk-row"><div class="hk-keys"><kbd>Shift</kbd><kbd>A</kbd></div><span>Open Add Node menu</span></div>
+        <div class="hk-row"><div class="hk-keys"><kbd>Shift</kbd><kbd>Click</kbd></div><span>Add / remove node from selection</span></div>
+        <div class="hk-row"><div class="hk-keys"><kbd>Shift</kbd><kbd>Right-click</kbd></div><span>Toggle connect mode</span></div>
+        <div class="hk-row"><div class="hk-keys"><kbd>Esc</kbd></div><span>Exit connect mode / close menus</span></div>
+        <div class="hk-section-title" style="margin-top:10px">Renaming</div>
+        <div class="hk-row"><div class="hk-keys"><kbd>Double-click</kbd></div><span>Rename flowchart or node</span></div>
+        <div class="hk-row"><div class="hk-keys"><kbd>Enter</kbd></div><span>Confirm rename</span></div>
+        <div class="hk-row"><div class="hk-keys"><kbd>Esc</kbd></div><span>Cancel rename</span></div>
+    </div>
+</div>
+
 <script>
-    const flowchartName = "{{ flowchart_name }}";
+    let flowchartName = "{{ flowchart_name }}";
     const flowchartId = {{ flowchart_id }};
 
     // --- Modal ---
@@ -569,6 +940,124 @@
         if (_modalResolve) { _modalResolve(null); _modalResolve = null; }
     }
 
+    // --- Leave confirmation ---
+    function confirmLeave(e) {
+        e.preventDefault();
+        document.getElementById("leave-overlay").classList.add("visible");
+    }
+    function leaveWithoutSaving() {
+        window.location.href = "/dashboard";
+    }
+    function leaveAndSave() {
+        const nodes = gatherNodes();
+        fetch("/save_flowchart", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ id: flowchartId, nodes, connections })
+        }).then(() => { window.location.href = "/dashboard"; });
+    }
+
+    // --- Rename / Delete flowchart ---
+    function openFcRenameDialog() {
+        closeSettings();
+        document.getElementById("fc-rename-input").value = flowchartName;
+        document.getElementById("fc-rename-overlay").classList.add("visible");
+        setTimeout(() => {
+            const inp = document.getElementById("fc-rename-input");
+            inp.focus(); inp.select();
+        }, 60);
+    }
+    function closeFcRenameDialog() {
+        document.getElementById("fc-rename-overlay").classList.remove("visible");
+    }
+    function startInlineRename() {
+        const span = document.getElementById("fc-name-span");
+        if (span.contentEditable === "true") return;
+        span.contentEditable = "true";
+        span.focus();
+        const range = document.createRange();
+        range.selectNodeContents(span);
+        const sel = window.getSelection();
+        sel.removeAllRanges();
+        sel.addRange(range);
+
+        function finish(save) {
+            span.contentEditable = "false";
+            const name = span.textContent.trim();
+            span.removeEventListener("keydown", keyHandler);
+            span.removeEventListener("blur", blurHandler);
+            if (save && name && name !== flowchartName) {
+                fetch("/rename_flowchart", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ id: flowchartId, name })
+                }).then(r => r.json()).then(d => {
+                    if (d.ok) {
+                        flowchartName = name;
+                        document.title = name + " — Flowchart Builder";
+                        showToast("Renamed!");
+                    } else {
+                        span.textContent = flowchartName;
+                        alert(d.error || "Error renaming.");
+                    }
+                });
+            } else {
+                span.textContent = flowchartName;
+            }
+        }
+
+        function keyHandler(e) {
+            if (e.key === "Enter") { e.preventDefault(); finish(true); }
+            if (e.key === "Escape") { e.preventDefault(); finish(false); }
+        }
+        function blurHandler() { finish(true); }
+        span.addEventListener("keydown", keyHandler);
+        span.addEventListener("blur", blurHandler);
+    }
+    document.getElementById("fc-rename-input").addEventListener("keydown", function(e) {
+        if (e.key === "Enter") doRenameFlowchart();
+        if (e.key === "Escape") closeFcRenameDialog();
+    });
+    function doRenameFlowchart() {
+        const name = document.getElementById("fc-rename-input").value.trim();
+        if (!name) return;
+        fetch("/rename_flowchart", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ id: flowchartId, name })
+        }).then(r => r.json()).then(d => {
+            if (d.ok) {
+                flowchartName = name;
+                document.title = name + " — Flowchart Builder";
+                const h2span = document.querySelector("#toolbar h2 span");
+                if (h2span) h2span.textContent = name;
+                closeFcRenameDialog();
+                showToast("Renamed!");
+            } else {
+                alert(d.error || "Error renaming.");
+            }
+        });
+    }
+    function openHotkeys() {
+        document.getElementById("hotkeys-overlay").classList.add("visible");
+    }
+    function closeHotkeys() {
+        document.getElementById("hotkeys-overlay").classList.remove("visible");
+    }
+
+    function deleteFlowchart() {
+        closeSettings();
+        if (!confirm(`Delete "${flowchartName}"? This cannot be undone.`)) return;
+        fetch("/delete_flowchart", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ id: flowchartId })
+        }).then(r => r.json()).then(d => {
+            if (d.ok) { window.location.href = "/dashboard"; }
+            else { alert(d.error || "Error deleting."); }
+        });
+    }
+
     document.getElementById("modal-input").addEventListener("keydown", (e) => {
         if (e.key === "Enter") modalConfirm();
         if (e.key === "Escape") modalCancel();
@@ -583,7 +1072,9 @@
     let nodeCounter = 0;
     let connCounter = 0;
     let currentAccent = "#7a30b0";
+    let _darkThemeColor = "#7a30b0";
     let selectedNode = null;
+    let selectedNodes = [];
     let selectedConnId = null;
     let connectMode = false;
     let connectSource = null;
@@ -610,12 +1101,179 @@
     });
 
     // --- Keyboard: delete selected ---
+    // --- Mouse tracking ---
+    let mouseX = 0, mouseY = 0;
+    document.addEventListener("mousemove", (e) => { mouseX = e.clientX; mouseY = e.clientY; });
+
+    // --- Add menu ---
+    function openAddMenu() {
+        const menu = document.getElementById("add-menu");
+        menu.classList.add("visible");
+        document.getElementById("add-menu-overlay").classList.add("visible");
+
+        const w = 210, h = 360;
+        const x = Math.min(mouseX, window.innerWidth  - w - 8);
+        const y = Math.min(mouseY, window.innerHeight - h - 8);
+        menu.style.left = Math.max(8, x) + "px";
+        menu.style.top  = Math.max(8, y) + "px";
+    }
+    function closeAddMenu() {
+        document.getElementById("add-menu").classList.remove("visible");
+        document.getElementById("add-menu-overlay").classList.remove("visible");
+    }
+
+    // --- Copy / Paste ---
+    let copiedNodeData = null;
+
+    function copySelected() {
+        if (!selectedNode) return;
+        copiedNodeData = serializeNode(selectedNode);
+        showToast("Copied", "#a060e0");
+    }
+
+    function pasteNode(canvasX, canvasY) {
+        if (!copiedNodeData) return;
+        nodeCounter++;
+        const nd = {
+            ...copiedNodeData,
+            id: "node-" + nodeCounter,
+            x: canvasX !== undefined ? snap(canvasX - 75) : (copiedNodeData.x || 100) + GRID,
+            y: canvasY !== undefined ? snap(canvasY - 20) : (copiedNodeData.y || 100) + GRID,
+            completed: false
+        };
+        const node = reconstructNode(nd);
+        selectNode(node);
+        evaluateAll();
+    }
+
+    // --- Context menu ---
+    let ctxTargetNode = null;
+
+    function openCtxMenu(node, x, y) {
+        ctxTargetNode = node;
+        const menu = document.getElementById("ctx-menu");
+        menu.classList.add("visible");
+        const w = 168, h = 120;
+        menu.style.left = Math.min(x, window.innerWidth  - w - 8) + "px";
+        menu.style.top  = Math.min(y, window.innerHeight - h - 8) + "px";
+    }
+
+    function closeCtxMenu() {
+        document.getElementById("ctx-menu").classList.remove("visible");
+        ctxTargetNode = null;
+    }
+
+    function ctxCopy() {
+        if (!ctxTargetNode) return;
+        copiedNodeData = serializeNode(ctxTargetNode);
+        showToast("Copied", "#a060e0");
+        closeCtxMenu();
+    }
+
+    async function ctxRename() {
+        if (!ctxTargetNode) return;
+        closeCtxMenu();
+        const titleEl = ctxTargetNode.querySelector(".node-title, .start-label, .end-label, .note-text, .gate-label");
+        if (!titleEl) return;
+        const newName = await showModal("Rename", titleEl.textContent.trim(), "Rename");
+        if (newName) titleEl.textContent = newName;
+    }
+
+    function ctxDelete() {
+        if (!ctxTargetNode) return;
+        const id = ctxTargetNode.id;
+        connections = connections.filter(c => c.sourceId !== id && c.targetId !== id);
+        if (selectedNode === ctxTargetNode) selectedNode = null;
+        ctxTargetNode.remove();
+        closeCtxMenu();
+        renderWires();
+        evaluateAll();
+    }
+
+    // Block browser native context menu everywhere on this page
+    document.addEventListener("contextmenu", (e) => e.preventDefault());
+
+    // Close menus on click elsewhere or Escape
+    document.addEventListener("click", () => { closeCtxMenu(); closeCanvasCtxMenu(); });
     document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") { closeCtxMenu(); closeCanvasCtxMenu(); closeHotkeys(); }
+    }, true);
+
+    // --- Canvas context menu (hold right-click) ---
+    let _canvasPasteX = 0, _canvasPasteY = 0;
+    let _holdTimer = null, _holdFired = false;
+
+    function openCanvasCtxMenu(x, y) {
+        _canvasPasteX = x; _canvasPasteY = y;
+        const menu = document.getElementById("canvas-ctx-menu");
+        const pasteItem = document.getElementById("canvas-ctx-paste");
+        pasteItem.style.opacity = copiedNodeData ? "1" : "0.35";
+        pasteItem.style.pointerEvents = copiedNodeData ? "auto" : "none";
+        menu.classList.add("visible");
+        const w = 168, h = 90;
+        menu.style.left = Math.min(x, window.innerWidth  - w - 8) + "px";
+        menu.style.top  = Math.min(y, window.innerHeight - h - 8) + "px";
+    }
+
+    function closeCanvasCtxMenu() {
+        document.getElementById("canvas-ctx-menu").classList.remove("visible");
+    }
+
+    function ctxPaste() {
+        closeCanvasCtxMenu();
+        if (!copiedNodeData) return;
+        const rect = document.getElementById("canvas").getBoundingClientRect();
+        pasteNode(_canvasPasteX - rect.left, _canvasPasteY - rect.top);
+    }
+
+    // Right-click: hold → canvas ctx menu; Shift+right-click → connect mode; node → node ctx menu
+    document.getElementById("canvas").addEventListener("mousedown", (e) => {
+        if (e.button !== 2 || e.target.closest(".node")) return;
+        _holdFired = false;
+        _holdTimer = setTimeout(() => {
+            _holdFired = true;
+            openCanvasCtxMenu(e.clientX, e.clientY);
+        }, 200);
+    });
+
+    document.addEventListener("mouseup", (e) => {
+        if (e.button === 2) clearTimeout(_holdTimer);
+    });
+
+    document.getElementById("canvas").addEventListener("contextmenu", (e) => {
+        e.preventDefault();
+        clearTimeout(_holdTimer);
+        const node = e.target.closest(".node");
+        if (node) {
+            closeCanvasCtxMenu(); closeAddMenu();
+            selectNode(node);
+            openCtxMenu(node, e.clientX, e.clientY);
+        } else if (!_holdFired && e.shiftKey) {
+            closeCanvasCtxMenu();
+            toggleConnectMode();
+        }
+    });
+
+    // --- Keyboard ---
+    document.addEventListener("keydown", (e) => {
+        if ((e.ctrlKey || e.metaKey) && e.key === "s") {
+            e.preventDefault();
+            saveFlowchart();
+            return;
+        }
+        if (document.activeElement.tagName === "INPUT" || document.activeElement.isContentEditable) return;
+
         if (e.key === "Delete" || e.key === "Backspace") {
-            if (document.activeElement.tagName === "INPUT") return;
             if (selectedConnId) {
                 connections = connections.filter(c => c.id !== selectedConnId);
                 selectedConnId = null;
+                renderWires();
+                evaluateAll();
+            } else if (selectedNodes.length > 0) {
+                const ids = new Set(selectedNodes.map(n => n.id));
+                connections = connections.filter(c => !ids.has(c.sourceId) && !ids.has(c.targetId));
+                selectedNodes.forEach(n => n.remove());
+                selectedNodes = [];
                 renderWires();
                 evaluateAll();
             } else if (selectedNode) {
@@ -627,7 +1285,16 @@
                 evaluateAll();
             }
         }
-        if (e.key === "Escape" && connectMode) toggleConnectMode();
+        if (e.key === "Escape") {
+            if (connectMode) toggleConnectMode();
+            closeAddMenu();
+        }
+        if (e.key === "A" && e.shiftKey && !e.ctrlKey) {
+            e.preventDefault();
+            openAddMenu();
+        }
+        if (e.key === "c" && e.ctrlKey) copySelected();
+        if (e.key === "v" && e.ctrlKey) pasteNode();
     });
 
     // --- Color picker ---
@@ -637,6 +1304,7 @@
         currentAccent = swatch.dataset.color;
         applyAccent(currentAccent);
         document.querySelectorAll(".custom-node-picker").forEach(p => p.value = currentAccent);
+        savePreferences();
     }
 
     function setAccentFromPicker(hex) {
@@ -648,6 +1316,7 @@
             const wrap = p.closest(".color-picker-wrap");
             if (wrap) { wrap.style.background = hex; wrap.style.color = isLight(hex) ? "#111" : "#eee"; }
         });
+        savePreferences();
     }
 
     function applyAccent(color) {
@@ -673,10 +1342,22 @@
 
     function resetThemeColor() {
         const purple = "#7a30b0";
+        _darkThemeColor = purple;
         document.getElementById("ui-theme-picker").value = purple;
         const wrap = document.querySelector(".theme-picker-wrap");
         if (wrap) wrap.style.background = purple;
         document.getElementById("theme-style").textContent = "";
+        currentAccent = purple;
+        applyAccent(purple);
+        document.querySelectorAll(".color-swatch").forEach(s => s.classList.remove("active"));
+        const first = document.querySelector("#color-picker-section .color-swatch");
+        if (first) first.classList.add("active");
+        document.querySelectorAll(".custom-node-picker").forEach(p => {
+            p.value = purple;
+            const w = p.closest(".color-picker-wrap");
+            if (w) { w.style.background = ""; w.style.color = ""; }
+        });
+        savePreferences();
     }
 
     function hexToHsl(hex) {
@@ -698,26 +1379,44 @@
     }
 
     function applyThemeColor(hex) {
+        const lightMode = document.body.classList.contains("light-mode");
         const [h, s, l] = hexToHsl(hex);
-        const clamp = (v, min, max) => Math.min(max, Math.max(min, v));
-        const hsl  = (ls, ss, ll) => `hsl(${h},${clamp(ss,5,100)}%,${clamp(ll,3,85)}%)`;
-        const hsla = (ls, ss, ll, a) => `hsla(${h},${clamp(ss,5,100)}%,${clamp(ll,3,85)}%,${a})`;
+        const clamp = (v, mn, mx) => Math.min(mx, Math.max(mn, v));
+        const hsl  = (ss, ll) => `hsl(${h},${clamp(ss,5,100)}%,${clamp(ll,3,85)}%)`;
+        const hsla = (ss, ll, a) => `hsla(${h},${clamp(ss,5,100)}%,${clamp(ll,3,85)}%,${a})`;
 
-        const dark      = hsl(h, s*0.85, l*0.48);
-        const mid       = hex;
-        const bright    = hsl(h, Math.min(100,s*1.1), Math.min(78,l*1.2));
-        const light     = hsl(h, Math.min(100,s*1.2), Math.min(88,l*1.65));
-        const active1   = hsl(h, Math.min(100,s+5), l*0.62);
-        const active2   = hsl(h, Math.min(100,s+5), l*0.43);
-        const modal     = hsl(h, s*0.9, l*0.72);
-        const glow      = hsla(h, s, l, 0.45);
-        const glowStrong= hsla(h, Math.min(100,s+10), l, 0.52);
-        const divider   = hsl(h, s*0.7, l*0.35);
+        const dark       = hsl(s*0.85, l*0.48);
+        const mid        = hex;
+        const bright     = hsl(Math.min(100,s*1.1), Math.min(78,l*1.2));
+        const light      = hsl(Math.min(100,s*1.2), Math.min(88,l*1.65));
+        const active1    = hsl(Math.min(100,s+5), l*0.62);
+        const active2    = hsl(Math.min(100,s+5), l*0.43);
+        const modal      = hsl(s*0.9, l*0.72);
+        const glow       = hsla(s, l, 0.45);
+        const glowStrong = hsla(Math.min(100,s+10), l, 0.52);
+        const divider    = hsl(s*0.7, l*0.35);
+        const subtle     = hsla(s, l, 0.12);
 
         const wrap = document.querySelector(".theme-picker-wrap");
         if (wrap) wrap.style.background = hex;
 
+        // Sync nodes + connections to theme color (dark mode only)
+        if (!lightMode) {
+            _darkThemeColor = hex;
+            currentAccent = hex;
+            applyAccent(hex);
+            document.querySelectorAll(".color-swatch").forEach(s => s.classList.remove("active"));
+            const match = document.querySelector(`.color-swatch[data-color="${hex}"]`);
+            if (match) match.classList.add("active");
+            document.querySelectorAll(".custom-node-picker").forEach(p => {
+                p.value = hex;
+                const w = p.closest(".color-picker-wrap");
+                if (w) { w.style.background = hex; w.style.color = isLight(hex) ? "#111" : "#eee"; }
+            });
+        }
+
         document.getElementById("theme-style").textContent = `
+            :root { --accent: ${mid}; }
             #toolbar { border-right-color: ${bright} !important; }
             .toolbar-btn { border-color: ${dark} !important; }
             .toolbar-btn:hover { border-color: ${bright} !important; box-shadow: 0 5px 18px ${glow}, inset 0 1px 0 rgba(255,255,255,0.08) !important; }
@@ -727,24 +1426,43 @@
             .node.connect-source { outline-color: ${bright} !important; box-shadow: 0 0 18px ${glowStrong} !important; }
             .checklist-item input[type="checkbox"] { accent-color: ${mid} !important; }
             .checklist-add { border-color: ${dark} !important; color: ${dark} !important; }
-            .checklist-add:hover { border-color: ${mid} !important; color: ${bright} !important; }
+            .checklist-add:hover { background: ${subtle} !important; border-color: ${mid} !important; color: ${bright} !important; }
             .resize-handle { border-color: ${modal} !important; }
             .clock-display { color: ${mid} !important; }
+            .clock-btn { border-color: ${dark} !important; }
+            .clock-btn:hover { border-color: ${bright} !important; }
+            .clock-btn.running { border-color: ${mid} !important; color: ${bright} !important; }
             [contenteditable="true"] { outline-color: ${mid} !important; }
-            #modal { border-color: ${modal} !important; box-shadow: 0 24px 60px rgba(0,0,0,0.85), 0 4px 20px ${glow}, inset 0 1px 0 rgba(255,255,255,0.05) !important; }
-            #modal input[type="text"]:focus { border-color: ${mid} !important; }
+            #modal, #leave-dialog { border-color: ${modal} !important; box-shadow: 0 24px 60px rgba(0,0,0,0.85), 0 4px 20px ${glow}, inset 0 1px 0 rgba(255,255,255,0.05) !important; }
+            #modal input[type="text"] { border-color: ${dark} !important; }
+            #modal input[type="text"]:focus { border-color: ${mid} !important; box-shadow: 0 0 0 3px ${subtle} !important; }
+            .modal-btn { border-color: ${dark} !important; }
+            .modal-btn:hover { border-color: ${modal} !important; }
             .modal-btn.primary { background: linear-gradient(160deg,${active1},${active2}) !important; border-color: ${mid} !important; }
             .modal-btn.primary:hover { box-shadow: 0 6px 18px ${glowStrong} !important; }
+            #ctx-menu, #canvas-ctx-menu, #add-menu { border-color: ${modal} !important; box-shadow: 0 14px 40px rgba(0,0,0,0.8), 0 4px 14px ${glow} !important; }
+            .ctx-item:hover { background: ${subtle} !important; }
+            .ctx-divider, .add-menu-divider { background: ${divider} !important; }
+            .add-menu-header { color: ${modal} !important; border-bottom-color: ${divider} !important; }
+            .add-menu-header kbd { background: ${subtle} !important; border-color: ${dark} !important; color: ${modal} !important; }
             #settings-panel { border-left-color: ${bright} !important; }
+            .settings-header { border-bottom-color: ${divider} !important; }
+            .settings-close:hover { background: ${subtle} !important; color: ${bright} !important; }
+            .settings-section-title { color: ${modal} !important; }
             .settings-divider { background: ${divider} !important; }
+            .settings-btn { border-color: ${dark} !important; }
+            .settings-btn:hover { border-color: ${bright} !important; }
             .color-picker-wrap { border-color: ${dark} !important; }
             .color-picker-wrap:hover { border-color: ${bright} !important; }
             .theme-picker-wrap { border-color: ${dark} !important; }
+            .theme-reset-btn { border-color: ${dark} !important; }
+            .theme-reset-btn:hover { border-color: ${bright} !important; }
+            #save-toast { border-color: ${dark} !important; }
+            #hint { color: ${divider} !important; }
             input[type="range"] { accent-color: ${mid} !important; }
             input[type="checkbox"] { accent-color: ${mid} !important; }
-            .bg-swatch:hover { border-color: ${modal} !important; }
-            .bg-swatch.active { border-color: ${light} !important; }
         `;
+        savePreferences();
     }
 
     // --- Selection ---
@@ -763,6 +1481,8 @@
     function deselectAll() {
         if (selectedNode) { selectedNode.classList.remove("selected"); selectedNode = null; }
         if (selectedConnId) { selectedConnId = null; renderWires(); }
+        selectedNodes.forEach(n => n.classList.remove("multi-selected"));
+        selectedNodes = [];
     }
 
     // --- Node factory ---
@@ -789,6 +1509,16 @@
             e.stopPropagation();
             if (connectMode) {
                 handleConnectClick(node);
+            } else if (e.shiftKey) {
+                if (selectedNode) { selectedNode.classList.remove("selected"); selectedNode = null; }
+                const idx = selectedNodes.indexOf(node);
+                if (idx !== -1) {
+                    node.classList.remove("multi-selected");
+                    selectedNodes.splice(idx, 1);
+                } else {
+                    node.classList.add("multi-selected");
+                    selectedNodes.push(node);
+                }
             } else {
                 selectNode(node);
             }
@@ -938,6 +1668,8 @@
     // --- Drag ---
     function makeDraggable(node) {
         let startX, startY, startLeft, startTop, dragging = false;
+        let groupStarts = []; // {node, left, top} for every node in the drag group
+
         node.addEventListener("mousedown", (e) => {
             if (connectMode) return;
             if (e.target.closest("input, label, .resize-handle")) return;
@@ -946,17 +1678,42 @@
             startLeft = parseInt(node.style.left) || 0;
             startTop  = parseInt(node.style.top)  || 0;
             node.classList.add("dragging");
+
+            // Build group if this node is part of a multi-selection
+            groupStarts = [];
+            if (selectedNodes.includes(node)) {
+                selectedNodes.forEach(n => {
+                    groupStarts.push({ node: n, left: parseInt(n.style.left) || 0, top: parseInt(n.style.top) || 0 });
+                    if (n !== node) n.classList.add("dragging");
+                });
+            }
+
             e.preventDefault();
         });
+
         document.addEventListener("mousemove", (e) => {
             if (!dragging) return;
-            node.style.left = snap(startLeft + e.clientX - startX) + "px";
-            node.style.top  = snap(startTop  + e.clientY - startY) + "px";
+            const dx = e.clientX - startX;
+            const dy = e.clientY - startY;
+            if (groupStarts.length > 0) {
+                groupStarts.forEach(({ node: n, left, top }) => {
+                    n.style.left = snap(left + dx) + "px";
+                    n.style.top  = snap(top  + dy) + "px";
+                });
+            } else {
+                node.style.left = snap(startLeft + dx) + "px";
+                node.style.top  = snap(startTop  + dy) + "px";
+            }
             renderWires();
         });
+
         document.addEventListener("mouseup", () => {
-            if (dragging) node.classList.remove("dragging");
+            if (dragging) {
+                node.classList.remove("dragging");
+                groupStarts.forEach(({ node: n }) => n.classList.remove("dragging"));
+            }
             dragging = false;
+            groupStarts = [];
         });
     }
 
@@ -1287,46 +2044,75 @@
     function updateGridSize(val) {
         GRID = parseInt(val);
         document.getElementById("grid-size-label").textContent = val + "px";
+        _applyGridSvg();
+        savePreferences();
+    }
+
+    function _applyGridSvg() {
+        const isLightMode = document.body.classList.contains("light-mode");
+        const strokeColor = isLightMode ? "black" : "white";
+        const strokeOpacity = isLightMode ? "0.18" : "0.22";
         const half = GRID / 2;
         const arm = Math.round(GRID * 0.21);
         const svgStr = `<svg xmlns="http://www.w3.org/2000/svg" width="${GRID}" height="${GRID}">` +
-            `<line x1="${half}" y1="${half - arm}" x2="${half}" y2="${half + arm}" stroke="white" stroke-width="1.5" stroke-opacity="0.22"/>` +
-            `<line x1="${half - arm}" y1="${half}" x2="${half + arm}" y2="${half}" stroke="white" stroke-width="1.5" stroke-opacity="0.22"/>` +
+            `<line x1="${half}" y1="${half - arm}" x2="${half}" y2="${half + arm}" stroke="${strokeColor}" stroke-width="1.5" stroke-opacity="${strokeOpacity}"/>` +
+            `<line x1="${half - arm}" y1="${half}" x2="${half + arm}" y2="${half}" stroke="${strokeColor}" stroke-width="1.5" stroke-opacity="${strokeOpacity}"/>` +
             `</svg>`;
         const canvas = document.getElementById("canvas");
         canvas.style.backgroundImage = `url("data:image/svg+xml,${encodeURIComponent(svgStr)}")`;
         canvas.style.backgroundSize = `${GRID}px ${GRID}px`;
     }
 
-    function setCanvasBg(swatch) {
-        document.querySelectorAll(".bg-swatch").forEach(s => s.classList.remove("active"));
-        swatch.classList.add("active");
-        document.getElementById("canvas").style.backgroundColor = swatch.dataset.bg;
-        _resetBgPickerWrap();
+    function toggleLightMode() {
+        const enabled = document.getElementById("light-mode-toggle").checked;
+        if (enabled) {
+            // Save current dark theme before switching
+            _darkThemeColor = document.getElementById("ui-theme-picker").value || "#7a30b0";
+        }
+        document.body.classList.toggle("light-mode", enabled);
+        _applyGridSvg();
+        if (enabled) {
+            const lc = "#2a2018";
+            document.getElementById("ui-theme-picker").value = lc;
+            const wrap = document.querySelector(".theme-picker-wrap");
+            if (wrap) wrap.style.background = lc;
+            // Inject dark chrome CSS without syncing nodes
+            document.getElementById("theme-style").textContent = `
+                #toolbar { border-right-color: #584840 !important; }
+                .toolbar-btn { border-color: #3a2a20 !important; }
+                .toolbar-btn.active { background: linear-gradient(160deg,#4a3e32,#3a2e22) !important; border-color: #584840 !important; }
+                #settings-panel { border-left-color: #584840 !important; }
+                .modal-btn.primary { background: linear-gradient(160deg,#3a3028,#2a2018) !important; border-color: #584840 !important; }
+                input[type="checkbox"] { accent-color: #584840 !important; }
+                input[type="range"] { accent-color: #584840 !important; }
+            `;
+        } else {
+            // Restore saved dark theme
+            applyThemeColor(_darkThemeColor);
+            document.getElementById("ui-theme-picker").value = _darkThemeColor;
+        }
+        savePreferences();
     }
 
-    function setCanvasBgFromPicker(hex) {
-        document.querySelectorAll(".bg-swatch").forEach(s => s.classList.remove("active"));
-        document.getElementById("canvas").style.backgroundColor = hex;
-        document.querySelectorAll(".custom-bg-picker").forEach(p => {
-            p.value = hex;
-            const wrap = p.closest(".color-picker-wrap");
-            if (wrap) { wrap.style.background = hex; wrap.style.color = isLight(hex) ? "#111" : "#eee"; }
+    function savePreferences() {
+        const isLight = document.body.classList.contains("light-mode");
+        const prefs = {
+            lightMode: isLight,
+            themeColor: _darkThemeColor,
+            accentColor: _darkThemeColor,
+            gridSize: GRID,
+            snapToGrid: document.getElementById("snap-toggle").checked,
+            autoSave: document.getElementById("autosave-toggle").checked
+        };
+        localStorage.setItem("lightMode", isLight ? "1" : "0");
+        fetch("/save_preferences", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(prefs)
         });
     }
 
-    function _resetBgPickerWrap() {
-        document.querySelectorAll(".custom-bg-picker").forEach(p => {
-            const wrap = p.closest(".color-picker-wrap");
-            if (wrap) { wrap.style.background = ""; wrap.style.color = ""; }
-        });
-    }
-
-    function resetAll() {
-        // Canvas background
-        const firstBg = document.querySelector(".bg-swatch");
-        if (firstBg) setCanvasBg(firstBg);
-
+function resetAll() {
         // UI theme
         resetThemeColor();
 
@@ -1348,36 +2134,86 @@
 
         // Snap
         document.getElementById("snap-toggle").checked = false;
+
+        // Auto-save
+        setAutoSave(false);
+        document.getElementById("autosave-toggle").checked = false;
+
+        // Light mode
+        document.getElementById("light-mode-toggle").checked = false;
+        document.body.classList.remove("light-mode");
+        localStorage.setItem("lightMode", "0");
+        _applyGridSvg();
     }
 
     // --- Export ---
+    function serializeNode(node) {
+        const clone = node.cloneNode(true);
+        clone.querySelector(".resize-handle")?.remove();
+        const type = node.classList.contains("start-node") ? "start"
+            : node.classList.contains("end-node") ? "end"
+            : node.classList.contains("gate-node") ? "gate"
+            : node.classList.contains("clock-node") ? "clock"
+            : node.classList.contains("note-node") ? "note"
+            : node.querySelector(".checklist") ? "checklist"
+            : "task";
+        const nd = {
+            id: node.id, type,
+            x: parseInt(node.style.left) || 0,
+            y: parseInt(node.style.top) || 0,
+            color: node.style.borderColor || currentAccent,
+            width: node.style.width || null,
+            minHeight: node.style.minHeight || null,
+            classes: Array.from(node.classList).filter(c => !["node","selected","dragging","connect-source","locked"].includes(c)),
+            completed: node.classList.contains("completed"),
+            html: clone.innerHTML
+        };
+        if (node.dataset.gateType) nd.gateType = node.dataset.gateType;
+        if (type === "clock" && clocks[node.id]) nd.clockData = { total: clocks[node.id].total };
+        return nd;
+    }
+
+    function gatherNodes() {
+        return Array.from(document.querySelectorAll(".node")).map(serializeNode);
+    }
+
+    function reconstructNode(nd) {
+        const node = document.createElement("div");
+        node.classList.add("node", ...(nd.classes || []).filter(c => c !== "node"));
+        node.id = nd.id;
+        node.style.left = nd.x + "px";
+        node.style.top  = nd.y + "px";
+        node.style.borderColor = nd.color || currentAccent;
+        if (nd.width) node.style.width = nd.width;
+        if (nd.minHeight) node.style.minHeight = nd.minHeight;
+        node.innerHTML = nd.html || "";
+        if (nd.completed) node.classList.add("completed");
+        if (nd.gateType) node.dataset.gateType = nd.gateType;
+
+        const titleEl = node.querySelector(".node-title");
+        if (titleEl) titleEl.addEventListener("dblclick", e => { e.stopPropagation(); makeEditable(e.target); });
+
+        if (nd.type === "task") {
+            node.addEventListener("dblclick", e => {
+                if (!e.target.closest("input") && !e.target.closest(".node-title")) toggleComplete(node);
+            });
+        } else if (nd.type === "note") {
+            const nt = node.querySelector(".note-text");
+            if (nt) nt.addEventListener("dblclick", e => { e.stopPropagation(); makeEditable(e.target); });
+        } else if (nd.type === "clock") {
+            node.addEventListener("dblclick", e => { e.stopPropagation(); if (e.target.closest(".clock-display")) editClockDuration(node.id); });
+            const total = nd.clockData?.total || 0;
+            if (total > 0) clocks[node.id] = { remaining: total, total, interval: null, running: false };
+        }
+
+        attachNode(node);
+        const num = parseInt(nd.id.replace("node-", "")) || 0;
+        if (num > nodeCounter) nodeCounter = num;
+        return node;
+    }
+
     function exportFlowchart() {
-        const nodes = [];
-        document.querySelectorAll(".node").forEach(node => {
-            const clone = node.cloneNode(true);
-            clone.querySelector(".resize-handle")?.remove();
-            const type = node.classList.contains("start-node") ? "start"
-                : node.classList.contains("end-node") ? "end"
-                : node.classList.contains("gate-node") ? "gate"
-                : node.classList.contains("clock-node") ? "clock"
-                : node.classList.contains("note-node") ? "note"
-                : node.querySelector(".checklist") ? "checklist"
-                : "task";
-            const nd = {
-                id: node.id, type,
-                x: parseInt(node.style.left) || 0,
-                y: parseInt(node.style.top) || 0,
-                color: node.style.borderColor || currentAccent,
-                width: node.style.width || null,
-                minHeight: node.style.minHeight || null,
-                classes: Array.from(node.classList).filter(c => !["node","selected","dragging","connect-source","locked"].includes(c)),
-                completed: node.classList.contains("completed"),
-                html: clone.innerHTML
-            };
-            if (node.dataset.gateType) nd.gateType = node.dataset.gateType;
-            if (type === "clock" && clocks[node.id]) nd.clockData = { total: clocks[node.id].total };
-            nodes.push(nd);
-        });
+        const nodes = gatherNodes();
         const payload = { version: 1, name: flowchartName, gridSize: GRID, connections, nodes };
         const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
         const url = URL.createObjectURL(blob);
@@ -1412,39 +2248,7 @@
             updateGridSize(data.gridSize);
         }
 
-        (data.nodes || []).forEach(nd => {
-            const node = document.createElement("div");
-            node.classList.add("node", ...(nd.classes || []).filter(c => c !== "node"));
-            node.id = nd.id;
-            node.style.left = nd.x + "px";
-            node.style.top  = nd.y + "px";
-            node.style.borderColor = nd.color || currentAccent;
-            if (nd.width) node.style.width = nd.width;
-            if (nd.minHeight) node.style.minHeight = nd.minHeight;
-            node.innerHTML = nd.html || "";
-            if (nd.completed) node.classList.add("completed");
-            if (nd.gateType) node.dataset.gateType = nd.gateType;
-
-            const titleEl = node.querySelector(".node-title");
-            if (titleEl) titleEl.addEventListener("dblclick", e => { e.stopPropagation(); makeEditable(e.target); });
-
-            if (nd.type === "task") {
-                node.addEventListener("dblclick", e => {
-                    if (!e.target.closest("input") && !e.target.closest(".node-title")) toggleComplete(node);
-                });
-            } else if (nd.type === "note") {
-                const nt = node.querySelector(".note-text");
-                if (nt) nt.addEventListener("dblclick", e => { e.stopPropagation(); makeEditable(e.target); });
-            } else if (nd.type === "clock") {
-                node.addEventListener("dblclick", e => { e.stopPropagation(); if (e.target.closest(".clock-display")) editClockDuration(node.id); });
-                const total = nd.clockData?.total || 0;
-                if (total > 0) clocks[node.id] = { remaining: total, total, interval: null, running: false };
-            }
-
-            attachNode(node);
-            const num = parseInt(nd.id.replace("node-", "")) || 0;
-            if (num > nodeCounter) nodeCounter = num;
-        });
+        (data.nodes || []).forEach(nd => reconstructNode(nd));
 
         connections = data.connections || [];
         connCounter = connections.reduce((max, c) => Math.max(max, parseInt(c.id.replace("conn-", "")) || 0), 0);
@@ -1452,24 +2256,83 @@
         evaluateAll();
     }
 
+    // --- Toast ---
+    function showToast(msg, color = "#55bb66") {
+        const t = document.getElementById("save-toast");
+        t.textContent = msg;
+        t.style.color = color;
+        t.style.borderColor = color;
+        t.classList.add("visible");
+        clearTimeout(t._tid);
+        t._tid = setTimeout(() => t.classList.remove("visible"), 2200);
+    }
+
+    // --- Auto-save ---
+    let _autoSaveInterval = null;
+    function setAutoSave(enabled) {
+        clearInterval(_autoSaveInterval);
+        if (enabled) _autoSaveInterval = setInterval(() => saveFlowchart(true), 30000);
+        savePreferences();
+    }
+
     // --- Save ---
-    function saveFlowchart() {
-        const nodes = [];
-        document.querySelectorAll(".node").forEach(node => {
-            nodes.push({
-                id: node.id,
-                x: parseInt(node.style.left),
-                y: parseInt(node.style.top),
-                title: node.querySelector(".node-title, .gate-label, .start-label, .end-label, .note-text")?.textContent?.trim(),
-                completed: node.classList.contains("completed")
-            });
-        });
+    function saveFlowchart(silent = false) {
+        const nodes = gatherNodes();
         fetch("/save_flowchart", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ id: flowchartId, nodes, connections })
-        }).then(r => r.json()).then(data => alert(data.message));
+        }).then(r => r.json()).then(() => {
+            showToast(silent ? "Auto-saved" : "Saved!");
+        });
     }
+
+    // --- Restore saved state on open ---
+    (function() {
+        const saved = {{ saved_data | tojson }};
+        if (saved && saved.nodes && saved.nodes.length > 0) {
+            loadCanvasData(saved);
+        }
+
+        // Restore all preferences from account
+        const prefs = {{ user_prefs | tojson }};
+
+        if (prefs.gridSize) {
+            GRID = prefs.gridSize;
+            const gi = document.getElementById("grid-size-input");
+            if (gi) { gi.value = prefs.gridSize; document.getElementById("grid-size-label").textContent = prefs.gridSize + "px"; }
+        }
+        if (prefs.snapToGrid) document.getElementById("snap-toggle").checked = true;
+        if (prefs.autoSave) { document.getElementById("autosave-toggle").checked = true; setAutoSave(true); }
+        if (prefs.accentColor) {
+            currentAccent = prefs.accentColor;
+            applyAccent(currentAccent);
+            document.querySelectorAll(".custom-node-picker").forEach(p => p.value = currentAccent);
+        }
+        _darkThemeColor = prefs.themeColor || "#7a30b0";
+        if (prefs.lightMode) {
+            document.body.classList.add("light-mode");
+            document.getElementById("light-mode-toggle").checked = true;
+            _applyGridSvg();
+            const lc = "#2a2018";
+            document.getElementById("ui-theme-picker").value = lc;
+            const wrap = document.querySelector(".theme-picker-wrap");
+            if (wrap) wrap.style.background = lc;
+            document.getElementById("theme-style").textContent = `
+                #toolbar { border-right-color: #584840 !important; }
+                .toolbar-btn { border-color: #3a2a20 !important; }
+                .toolbar-btn.active { background: linear-gradient(160deg,#4a3e32,#3a2e22) !important; border-color: #584840 !important; }
+                #settings-panel { border-left-color: #584840 !important; }
+                .modal-btn.primary { background: linear-gradient(160deg,#3a3028,#2a2018) !important; border-color: #584840 !important; }
+                input[type="checkbox"] { accent-color: #584840 !important; }
+                input[type="range"] { accent-color: #584840 !important; }
+            `;
+        } else {
+            applyThemeColor(_darkThemeColor);
+            document.getElementById("ui-theme-picker").value = _darkThemeColor;
+        }
+        _applyGridSvg();
+    })();
 </script>
 
 </body>

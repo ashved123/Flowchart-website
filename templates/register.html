@@ -83,9 +83,34 @@
         }
         .footer-link a { color: #8a45c0; text-decoration: none; }
         .footer-link a:hover { color: #b070e0; text-decoration: underline; }
+
+        body.light-mode { background: #d8cfc4; color: #261e16; }
+        body.light-mode .card {
+            background: linear-gradient(160deg, #d4ccbf 0%, #ccc4b8 100%);
+            border-color: #a8957e;
+            box-shadow: 0 24px 50px rgba(50,30,10,0.15), 0 4px 16px rgba(80,50,20,0.1);
+        }
+        body.light-mode .card-header h1 { color: #261e16; }
+        body.light-mode .card-header p { color: #7a6858; }
+        body.light-mode .field label { color: #6a5848; }
+        body.light-mode .field input { background: #cec4b8; border-color: #a8957e; color: #261e16; }
+        body.light-mode .field input:focus { border-color: #6a4e38; box-shadow: 0 0 0 3px rgba(100,70,40,0.12); }
+        body.light-mode .submit-btn {
+            background: linear-gradient(160deg, #3a3028, #2a2018);
+            border-color: #584840; color: #f0e8de;
+            box-shadow: 0 4px 14px rgba(40,25,10,0.25);
+        }
+        body.light-mode .submit-btn:hover {
+            background: linear-gradient(160deg, #4a3e32, #3a2e22);
+            box-shadow: 0 6px 18px rgba(40,25,10,0.35);
+        }
+        body.light-mode .footer-link { color: #7a6858; }
+        body.light-mode .footer-link a { color: #6a4e38; }
+        body.light-mode .footer-link a:hover { color: #3a2e22; }
     </style>
 </head>
 <body>
+<script>if (localStorage.getItem("lightMode") === "1") document.body.classList.add("light-mode");</script>
     <div class="card">
         <div class="card-header">
             <h1>Create Account</h1>
