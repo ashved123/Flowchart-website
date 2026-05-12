@@ -138,18 +138,13 @@ def dashboard():
     return render_template("dashboard.html", flowcharts=flowcharts, username=session["username"], user_prefs=get_user_prefs())
 
 
-@app.route("/new_flowchart")
-@login_required
-def new_flowchart():
-    return render_template("new_flowchart.html")
-
 
 @app.route("/create_flowchart", methods=["POST"])
 @login_required
 def create_flowchart():
     name = request.form["flowchart_name"].strip()
     if not name:
-        return redirect(url_for("new_flowchart"))
+        return redirect(url_for("dashboard"))
     db = get_db()
     cursor = db.execute(
         "INSERT INTO flowcharts (user_id, name) VALUES (?, ?)",

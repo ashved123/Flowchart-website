@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>{{ flowchart_name }} — Flowchart Builder</title>
+    <title>{{ flowchart_name }} — Logiflow</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -65,6 +65,14 @@
         .toolbar-btn.active { background: linear-gradient(160deg, #550090, #3d0060); border-color: #a060e0; color: #fff; box-shadow: 0 4px 18px rgba(140,0,220,0.5); }
 
         .toolbar-divider { width: 100%; height: 1px; background: #4a1a70; opacity: 0.7; margin: 4px 0; }
+        .connect-sticky-wrap {
+            display: flex; align-items: center; gap: 6px;
+            font-size: 0.7rem; color: #555; padding: 0 4px;
+            cursor: pointer; user-select: none;
+        }
+        .connect-sticky-wrap input { accent-color: #7a30b0; cursor: pointer; }
+        body.light-mode .connect-sticky-wrap { color: #7a6858; }
+        body.light-mode .connect-sticky-wrap input { accent-color: #8a5028; }
 
         #color-picker-section { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
         #color-picker-section label { font-size: 0.75rem; color: #555; width: 100%; margin-bottom: 2px; }
@@ -86,9 +94,24 @@
             background-size: 48px 48px;
         }
         #canvas.connect-mode { cursor: crosshair; }
+        #canvas.panning { cursor: grabbing !important; }
+
+        #canvas-world {
+            position: absolute;
+            top: 0; left: 0;
+            width: 8000px; height: 6000px;
+            transform-origin: 0 0;
+        }
 
         #snap-label { font-size: 0.8rem; color: #777; display: flex; align-items: center; gap: 6px; cursor: pointer; width: 100%; }
         #snap-label input { accent-color: #8a35c0; cursor: pointer; width: 14px; height: 14px; }
+
+        #slash-canvas {
+            position: absolute;
+            inset: 0;
+            z-index: 10;
+            pointer-events: none;
+        }
 
         #wire-svg {
             position: absolute;
@@ -111,16 +134,16 @@
             overflow: hidden;
             word-wrap: break-word;
             overflow-wrap: break-word;
-            box-shadow: 0 3px 12px rgba(0,0,0,0.7), inset 0 1px 0 rgba(255,255,255,0.06);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.85), 0 2px 6px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.06);
             transition: box-shadow 0.2s, transform 0.2s, border-color 0.2s;
         }
         .node:hover {
-            box-shadow: 0 8px 28px rgba(0,0,0,0.8), 0 2px 8px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.09);
+            box-shadow: 0 12px 36px rgba(0,0,0,0.9), 0 4px 12px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.09);
             transform: translateY(-2px);
         }
         .node:active { cursor: grabbing; }
         .node.dragging {
-            box-shadow: 0 24px 60px rgba(0,0,0,0.9), 0 8px 20px rgba(0,0,0,0.6);
+            box-shadow: 0 30px 70px rgba(0,0,0,0.95), 0 10px 24px rgba(0,0,0,0.7);
             transform: scale(1.03) translateY(-7px);
             z-index: 50;
         }
@@ -132,7 +155,7 @@
         .note-text { font-size: 0.85rem; color: #b0a870; font-style: italic; word-break: break-word; white-space: normal; }
         .gate-label { font-size: 0.9rem; font-weight: bold; letter-spacing: 3px; word-break: break-word; }
 
-        .node.completed { border-color: #2e7a3a !important; box-shadow: 0 3px 12px rgba(0,0,0,0.7), 0 0 12px rgba(46,122,58,0.2); }
+        .node.completed { border-color: #2e7a3a !important; box-shadow: 0 6px 20px rgba(0,0,0,0.85), 0 2px 6px rgba(0,0,0,0.5), 0 0 12px rgba(46,122,58,0.2); }
         .node.completed .node-status { color: #55bb66; }
         .node.locked { border-color: #1e1e22 !important; opacity: 0.45; }
 
@@ -193,7 +216,55 @@
 
         /* Clock node */
         .clock-node { background: #0a0a18; min-width: 160px; text-align: center; }
+        .alarm-node { background: linear-gradient(150deg, #18181e 0%, #0c0c10 100%); min-width: 160px; text-align: center; }
+        .alarm-label { font-size: 0.75rem; color: var(--accent, #a08060); opacity: 0.75; letter-spacing: 2px; margin-bottom: 6px; }
+        .alarm-name { cursor: text; border-radius: 3px; padding: 0 2px; transition: background 0.15s; }
+        .alarm-name:hover { background: rgba(255,255,255,0.08); }
+        #alarm-modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:1000; align-items:center; justify-content:center; }
+        #alarm-modal-overlay.visible { display:flex; }
+        #alarm-modal { background: linear-gradient(160deg,#111116,#0a0a0e); border:1px solid #4a1a70; border-radius:12px; padding:28px 28px 24px; width:280px; display:flex; flex-direction:column; gap:16px; box-shadow:0 24px 60px rgba(0,0,0,0.85); }
+        #alarm-modal h3 { font-size:1rem; color:#eee; margin:0; }
+        #alarm-time-input { background:#0d0d10; border:1px solid #3a1a50; border-radius:7px; padding:10px 14px; color:#eee; font-size:1.1rem; outline:none; width:100%; letter-spacing:2px; transition:border-color 0.15s,box-shadow 0.15s; }
+        #alarm-time-input:focus { border-color:#7a30b0; box-shadow:0 0 0 3px rgba(122,48,176,0.15); }
+        .ampm-row { display:flex; gap:8px; }
+        .ampm-btn { flex:1; padding:8px; border-radius:7px; border:1px solid #3a1a50; background:transparent; color:#777; font-size:0.9rem; font-weight:bold; cursor:pointer; transition:all 0.15s; }
+        .ampm-btn.active { background:linear-gradient(160deg,#550090,#3d0060); border-color:#7a30b0; color:#eee; }
+        .ampm-btn:hover:not(.active) { border-color:#7a30b0; color:#c090e0; }
+        body.light-mode #alarm-modal { background:linear-gradient(160deg,#d4ccbf,#ccc4b8); border-color:#a8957e; }
+        body.light-mode #alarm-modal h3 { color:#261e16; }
+        body.light-mode #alarm-time-input { background:#cec4b8; border-color:#a8957e; color:#261e16; }
+        body.light-mode #alarm-time-input:focus { border-color:#8a5028; box-shadow:0 0 0 3px rgba(138,80,40,0.15); }
+        body.light-mode .ampm-btn { border-color:#a8957e; color:#8a7868; }
+        body.light-mode .ampm-btn.active { background:linear-gradient(160deg,#3a3028,#2a2018); border-color:#584840; color:#f0e8de; }
+        body.light-mode .ampm-btn:hover:not(.active) { border-color:#8a5028; color:#5a3a20; }
+        #alarm-modal-buttons { display:flex; gap:10px; justify-content:flex-end; }
+        .alarm-option-row { display:flex; align-items:center; gap:10px; font-size:0.85rem; color:#888; cursor:pointer; user-select:none; }
+        body.light-mode .alarm-option-row { color:#7a6858; }
+        #alarm-duration-row { display:none; flex-direction:column; gap:5px; }
+        #alarm-duration-row.visible { display:flex; }
+        #alarm-duration-row label { font-size:0.78rem; color:#666; }
+        body.light-mode #alarm-duration-row label { color:#8a7868; }
+        #alarm-ring-duration { background:#0d0d10; border:1px solid #3a1a50; border-radius:7px; padding:9px 14px; color:#eee; font-size:0.95rem; outline:none; width:100%; transition:border-color 0.15s,box-shadow 0.15s; }
+        #alarm-ring-duration:focus { border-color:#7a30b0; box-shadow:0 0 0 3px rgba(122,48,176,0.15); }
+        body.light-mode #alarm-ring-duration { background:#cec4b8; border-color:#a8957e; color:#261e16; }
+        body.light-mode #alarm-ring-duration:focus { border-color:#8a5028; box-shadow:0 0 0 3px rgba(138,80,40,0.15); }
+        #alarm-loop-track { width:36px; height:20px; background:#2a1a40; border-radius:10px; position:relative; transition:background 0.2s; flex-shrink:0; }
+        #alarm-loop-thumb { width:14px; height:14px; background:#555; border-radius:50%; position:absolute; top:3px; left:3px; transition:left 0.2s,background 0.2s; }
+        #alarm-loop-track.on { background:#3d006a; }
+        #alarm-loop-thumb.on { left:19px; background:#7a30b0; }
+        body.light-mode #alarm-loop-track { background:#c8b8a4; }
+        body.light-mode #alarm-loop-track.on { background:#c4a888; }
+        body.light-mode #alarm-loop-thumb.on { background:#8a5028; }
+        .alarm-loop-badge { color: #b090e0; font-weight: normal; }
+        body.light-mode .alarm-loop-badge { color: #8a5028; }
+        .alarm-live { font-size: 1.5rem; font-weight: bold; color: var(--accent, #d4956a); font-variant-numeric: tabular-nums; margin: 4px 0; letter-spacing: 2px; }
+        .alarm-target { font-size: 0.75rem; color: #666; margin-bottom: 2px; letter-spacing: 1px; }
+        .alarm-target span { color: var(--accent, #c07840); font-weight: bold; }
+        .alarm-node.completed .alarm-live { color: #55bb66; }
+        .alarm-node.completed .alarm-target span { color: #55bb66; }
         .clock-label { font-size: 0.75rem; color: #666; letter-spacing: 2px; margin-bottom: 6px; }
+        .clock-name { cursor: text; border-radius: 3px; padding: 0 2px; transition: background 0.15s; }
+        .clock-name:hover { background: rgba(255,255,255,0.08); }
         .clock-display {
             font-size: 1.8rem;
             font-weight: bold;
@@ -329,6 +400,7 @@
         }
         body.light-mode #fc-rename-dialog h3 { color: #2e2018; }
         body.light-mode #fc-rename-input { background: #c9bfb3; border-color: #a8957e; color: #261e16; }
+        body.light-mode #fc-rename-input:focus { border-color: #8a5028; box-shadow: 0 0 0 3px rgba(138,80,40,0.15); }
 
         #hotkeys-overlay {
             display: none; position: fixed; inset: 0;
@@ -511,13 +583,13 @@
         body.light-mode .node {
             background: linear-gradient(150deg, #d8d0c4 0%, #d0c8bc 100%);
             border-color: #a8957e !important;
-            box-shadow: 0 3px 14px rgba(50,30,10,0.1), inset 0 1px 0 rgba(255,255,255,0.18);
+            box-shadow: 0 6px 20px rgba(50,30,10,0.2), 0 2px 6px rgba(50,30,10,0.12), inset 0 1px 0 rgba(255,255,255,0.18);
         }
         body.light-mode .node:hover {
-            box-shadow: 0 8px 24px rgba(50,30,10,0.14), 0 2px 6px rgba(50,30,10,0.08);
+            box-shadow: 0 12px 32px rgba(50,30,10,0.26), 0 4px 10px rgba(50,30,10,0.16);
         }
         body.light-mode .node.dragging {
-            box-shadow: 0 24px 50px rgba(50,30,10,0.18), 0 8px 16px rgba(50,30,10,0.1);
+            box-shadow: 0 28px 56px rgba(50,30,10,0.3), 0 10px 20px rgba(50,30,10,0.18);
         }
         body.light-mode .node-title { color: #261e16; }
         body.light-mode .node-status { color: #907868; }
@@ -527,7 +599,14 @@
         body.light-mode .end-node { background: linear-gradient(150deg, #ddbcb8, #d4b0ac); border-color: #b06860 !important; }
         body.light-mode .note-node { background: #d8cfa0; border-color: #a89840 !important; }
         body.light-mode .clock-node { background: linear-gradient(150deg, #b8cede, #acbfd4); border-color: #6090b0 !important; }
+        body.light-mode .alarm-node { background: linear-gradient(150deg, #dedad0, #d4cec4); border-color: #b09870 !important; }
+        body.light-mode .alarm-label { color: #8a7858; }
+        body.light-mode .alarm-name:hover { background: rgba(0,0,0,0.07); }
+        body.light-mode .alarm-live { color: #6a4010; }
+        body.light-mode .alarm-target { color: #8a7858; }
+        body.light-mode .alarm-target span { color: #8a5020; }
         body.light-mode .clock-label { color: #607e98; }
+        body.light-mode .clock-name:hover { background: rgba(0,0,0,0.07); }
         body.light-mode .clock-display { color: #345878; }
         body.light-mode .clock-btn {
             background: linear-gradient(160deg, #b8c8d8, #aebdce);
@@ -537,8 +616,9 @@
         body.light-mode .checklist-item { color: #423424; }
         body.light-mode .checklist-item.checked { color: #286e36; }
         body.light-mode .checklist-add { border-color: #a8957e; color: #5a6848; }
+        body.light-mode .checklist-add:hover { background: linear-gradient(160deg, #3a3028, #2a2018); color: #f0e8de; border-color: #584840; }
         body.light-mode .resize-handle { border-color: #907868; }
-        body.light-mode .node.completed { border-color: #4e9860 !important; box-shadow: 0 3px 12px rgba(40,120,60,0.12), 0 0 10px rgba(40,120,60,0.08); }
+        body.light-mode .node.completed { border-color: #4e9860 !important; box-shadow: 0 6px 20px rgba(50,30,10,0.2), 0 2px 6px rgba(50,30,10,0.12), 0 0 10px rgba(40,120,60,0.12); }
         body.light-mode .node.locked { border-color: #b0a090 !important; opacity: 0.5; }
         body.light-mode .gate-label { color: #284868; }
         body.light-mode .start-label { color: #1e6030; }
@@ -572,6 +652,7 @@
         }
         body.light-mode #modal h3 { color: #2e2018; }
         body.light-mode #modal input[type="text"] { background: #c9bfb3; border-color: #a8957e; color: #261e16; }
+        body.light-mode #modal input[type="text"]:focus { border-color: #8a5028; box-shadow: 0 0 0 3px rgba(138,80,40,0.15); }
         body.light-mode .modal-btn { background: linear-gradient(160deg, #cec4b8, #c6bcb0); color: #423424; border-color: #a8957e; }
         body.light-mode .modal-btn:hover { background: linear-gradient(160deg, #c4b9ac, #bcb0a4); color: #261e16; }
         body.light-mode .modal-btn.primary { background: linear-gradient(160deg, #3a3028, #2a2018) !important; border-color: #584840 !important; color: #f0e8de !important; box-shadow: 0 4px 14px rgba(40,25,10,0.25) !important; }
@@ -592,6 +673,8 @@
 
         .node.multi-selected { outline: 2px solid #c0a0ff; outline-offset: 3px; }
         body.light-mode .node.multi-selected { outline-color: #6a4e38; }
+        body.light-mode .node.selected { outline-color: #8a5028; }
+        body.light-mode .node.connect-source { outline-color: #8a5028; box-shadow: 0 6px 20px rgba(50,30,10,0.2), 0 2px 6px rgba(50,30,10,0.12), 0 0 16px rgba(138,80,40,0.3); }
 
         /* Settings */
         #settings-overlay {
@@ -705,6 +788,12 @@
         <div class="color-swatch" style="background:#207040" data-color="#207040" title="Forest" onclick="setAccent(this)"></div>
         <div class="color-swatch" style="background:#904020" data-color="#904020" title="Ember" onclick="setAccent(this)"></div>
         <div class="color-swatch" style="background:#606060" data-color="#606060" title="Mono" onclick="setAccent(this)"></div>
+        <div style="width:100%;height:1px;background:rgba(255,255,255,0.07);margin:3px 0;flex-basis:100%"></div>
+        <div class="color-swatch" style="background:#8a5028" data-color="#8a5028" title="Caramel" onclick="setAccent(this)"></div>
+        <div class="color-swatch" style="background:#904040" data-color="#904040" title="Brick" onclick="setAccent(this)"></div>
+        <div class="color-swatch" style="background:#4a7845" data-color="#4a7845" title="Sage" onclick="setAccent(this)"></div>
+        <div class="color-swatch" style="background:#3a5888" data-color="#3a5888" title="Denim" onclick="setAccent(this)"></div>
+        <div class="color-swatch" style="background:#785870" data-color="#785870" title="Mauve" onclick="setAccent(this)"></div>
         <label class="color-picker-wrap" title="Pick a custom color">
             Custom
             <input type="color" class="custom-node-picker" value="#7a30b0" oninput="setAccentFromPicker(this.value)">
@@ -722,8 +811,13 @@
     <button class="toolbar-btn" onclick="addGateNode('OR')">OR</button>
     <button class="toolbar-btn" onclick="addGateNode('XOR')">XOR</button>
     <button class="toolbar-btn" onclick="addClockNode()">⏱ Timer</button>
+    <button class="toolbar-btn" onclick="addAlarmNode()">⏱ Alarm</button>
     <div class="toolbar-divider"></div>
     <button class="toolbar-btn" id="connect-btn" onclick="toggleConnectMode()">&#x1F517; Connect</button>
+    <label class="connect-sticky-wrap" title="Keep connect mode on after each connection">
+        <input type="checkbox" id="connect-sticky-toggle" onchange="connectSticky = this.checked">
+        Stay on
+    </label>
     <div class="toolbar-divider"></div>
     <button class="toolbar-btn" onclick="saveFlowchart()">Save</button>
     <div class="toolbar-divider"></div>
@@ -732,8 +826,11 @@
 </div>
 
 <div id="canvas">
-    <svg id="wire-svg"></svg>
-<div id="hint">Click "Connect" then click two nodes to wire them · Click a wire to select · Delete removes selection</div>
+    <div id="canvas-world">
+        <svg id="wire-svg"></svg>
+    </div>
+    <canvas id="slash-canvas"></canvas>
+    <div id="hint">Click "Connect" then click two nodes to wire them · Click a wire to select · Delete removes selection</div>
 </div>
 <div id="save-toast"></div>
 
@@ -775,6 +872,13 @@
             <div class="color-swatch" style="background:#207040" data-color="#207040" title="Forest" onclick="setAccent(this)"></div>
             <div class="color-swatch" style="background:#904020" data-color="#904020" title="Ember" onclick="setAccent(this)"></div>
             <div class="color-swatch" style="background:#606060" data-color="#606060" title="Mono" onclick="setAccent(this)"></div>
+        </div>
+        <div class="swatch-row" style="margin-top:6px;">
+            <div class="color-swatch" style="background:#8a5028" data-color="#8a5028" title="Caramel" onclick="setAccent(this)"></div>
+            <div class="color-swatch" style="background:#904040" data-color="#904040" title="Brick" onclick="setAccent(this)"></div>
+            <div class="color-swatch" style="background:#4a7845" data-color="#4a7845" title="Sage" onclick="setAccent(this)"></div>
+            <div class="color-swatch" style="background:#3a5888" data-color="#3a5888" title="Denim" onclick="setAccent(this)"></div>
+            <div class="color-swatch" style="background:#785870" data-color="#785870" title="Mauve" onclick="setAccent(this)"></div>
             <label class="color-picker-wrap" title="Custom color">
                 <input type="color" class="custom-node-picker" value="#7a30b0" oninput="setAccentFromPicker(this.value)">
             </label>
@@ -834,6 +938,7 @@
 <div id="ctx-menu">
     <div class="ctx-item" onclick="ctxCopy()">⎘ Copy</div>
     <div class="ctx-item" onclick="ctxRename()">✎ Rename</div>
+    <div class="ctx-item" onclick="ctxConnect()">⇝ Connect</div>
     <div class="ctx-divider"></div>
     <div class="ctx-item danger" onclick="ctxDelete()">✕ Delete</div>
 </div>
@@ -853,6 +958,7 @@
     <button class="toolbar-btn" onclick="closeAddMenu(); addGateNode('OR')">OR Gate</button>
     <button class="toolbar-btn" onclick="closeAddMenu(); addGateNode('XOR')">XOR Gate</button>
     <button class="toolbar-btn" onclick="closeAddMenu(); addClockNode()">⏱ Timer</button>
+    <button class="toolbar-btn" onclick="closeAddMenu(); addAlarmNode()">⏱ Alarm</button>
 </div>
 
 <div id="modal-overlay">
@@ -862,6 +968,29 @@
         <div id="modal-buttons">
             <button class="modal-btn" onclick="modalCancel()">Cancel</button>
             <button class="modal-btn primary" id="modal-confirm-btn" onclick="modalConfirm()">Create</button>
+        </div>
+    </div>
+</div>
+
+<div id="alarm-modal-overlay">
+    <div id="alarm-modal">
+        <h3>Set Alarm Time</h3>
+        <input type="text" id="alarm-time-input" placeholder="hh:mm" maxlength="5">
+        <div class="ampm-row">
+            <button class="ampm-btn active" id="ampm-am" onclick="selectAmPm('AM')">AM</button>
+            <button class="ampm-btn" id="ampm-pm" onclick="selectAmPm('PM')">PM</button>
+        </div>
+        <label class="alarm-option-row" onclick="toggleAlarmLoop()">
+            <div class="toggle-track" id="alarm-loop-track"><div class="toggle-thumb" id="alarm-loop-thumb"></div></div>
+            <span>Loop</span>
+        </label>
+        <div id="alarm-duration-row">
+            <label for="alarm-ring-duration">Ring for (minutes)</label>
+            <input type="number" id="alarm-ring-duration" min="1" max="1440" value="5" placeholder="5">
+        </div>
+        <div id="alarm-modal-buttons">
+            <button class="modal-btn" onclick="cancelAlarmModal()">Cancel</button>
+            <button class="modal-btn primary" onclick="confirmAlarmModal()">Add Alarm</button>
         </div>
     </div>
 </div>
@@ -895,6 +1024,8 @@
             <button class="modal-btn" onclick="closeHotkeys()">✕</button>
         </div>
         <div class="hk-section-title">Canvas</div>
+        <div class="hk-row"><div class="hk-keys"><kbd>Scroll</kbd></div><span>Zoom in / out</span></div>
+        <div class="hk-row"><div class="hk-keys"><kbd>Middle-click drag</kbd></div><span>Pan the canvas</span></div>
         <div class="hk-row"><div class="hk-keys"><kbd>Ctrl</kbd><kbd>S</kbd></div><span>Save flowchart</span></div>
         <div class="hk-row"><div class="hk-keys"><kbd>Ctrl</kbd><kbd>C</kbd></div><span>Copy selected node</span></div>
         <div class="hk-row"><div class="hk-keys"><kbd>Ctrl</kbd><kbd>V</kbd></div><span>Paste node</span></div>
@@ -994,7 +1125,7 @@
                 }).then(r => r.json()).then(d => {
                     if (d.ok) {
                         flowchartName = name;
-                        document.title = name + " — Flowchart Builder";
+                        document.title = name + " — Logiflow";
                         showToast("Renamed!");
                     } else {
                         span.textContent = flowchartName;
@@ -1028,7 +1159,7 @@
         }).then(r => r.json()).then(d => {
             if (d.ok) {
                 flowchartName = name;
-                document.title = name + " — Flowchart Builder";
+                document.title = name + " — Logiflow";
                 const h2span = document.querySelector("#toolbar h2 span");
                 if (h2span) h2span.textContent = name;
                 closeFcRenameDialog();
@@ -1063,6 +1194,11 @@
         if (e.key === "Escape") modalCancel();
     });
 
+    document.getElementById("alarm-time-input").addEventListener("keydown", (e) => {
+        if (e.key === "Enter") confirmAlarmModal();
+        if (e.key === "Escape") cancelAlarmModal();
+    });
+
     let GRID = 48;
     function snap(val) {
         if (!document.getElementById("snap-toggle").checked) return val;
@@ -1076,8 +1212,83 @@
     let selectedNode = null;
     let selectedNodes = [];
     let selectedConnId = null;
+
+    let panX = 0, panY = 0, zoom = 1;
+    function applyViewTransform() {
+        document.getElementById("canvas-world").style.transform =
+            `translate(${panX}px,${panY}px) scale(${zoom})`;
+        const gs = GRID * zoom;
+        const canvas = document.getElementById("canvas");
+        canvas.style.backgroundSize     = `${gs}px ${gs}px`;
+        canvas.style.backgroundPosition = `${panX % gs}px ${panY % gs}px`;
+    }
+    function screenToWorld(clientX, clientY) {
+        const r = document.getElementById("canvas").getBoundingClientRect();
+        return { x: (clientX - r.left - panX) / zoom, y: (clientY - r.top - panY) / zoom };
+    }
     let connectMode = false;
     let connectSource = null;
+    let connectSticky = false;
+    let connectionHistory = [];
+
+    // --- Undo ---
+    const MAX_UNDO = 60;
+    let undoStack = [];
+
+    function pushUndoSnapshot() {
+        const clockStates = {};
+        Object.entries(clocks).forEach(([id, c]) => {
+            clockStates[id] = { remaining: c.remaining, total: c.total };
+        });
+        undoStack.push({
+            nodes: gatherNodes(),
+            connections: JSON.parse(JSON.stringify(connections)),
+            clockStates,
+            nodeCounter,
+            connCounter
+        });
+        if (undoStack.length > MAX_UNDO) undoStack.shift();
+    }
+
+    function undo() {
+        if (undoStack.length === 0) { showToast("Nothing to undo", "#888"); return; }
+        const snap = undoStack.pop();
+
+        // Stop all running clocks and alarms
+        Object.values(clocks).forEach(c => { if (c.interval) clearInterval(c.interval); });
+        Object.keys(clocks).forEach(k => delete clocks[k]);
+        Object.values(alarms).forEach(a => { if (a.interval) clearInterval(a.interval); if (a.resetTimeout) clearTimeout(a.resetTimeout); });
+        Object.keys(alarms).forEach(k => delete alarms[k]);
+
+        // Clear DOM nodes
+        document.querySelectorAll("#canvas-world .node").forEach(n => n.remove());
+
+        // Reset selection state
+        selectedNode = null;
+        selectedNodes = [];
+        selectedConnId = null;
+        if (connectSource) { connectSource = null; }
+
+        // Restore connections + counters
+        connections = snap.connections;
+        connectionHistory = connections.map(c => c.id);
+        connCounter = snap.connCounter;
+
+        // Pre-populate clocks so reconstructNode finds them
+        Object.entries(snap.clockStates).forEach(([id, cs]) => {
+            clocks[id] = { remaining: cs.remaining, total: cs.total, interval: null, running: false };
+        });
+
+        // Reconstruct nodes
+        snap.nodes.forEach(nd => reconstructNode(nd));
+
+        // Restore nodeCounter AFTER reconstruction (reconstructNode only bumps it up)
+        nodeCounter = Math.max(nodeCounter, snap.nodeCounter);
+
+        renderWires();
+        evaluateAll();
+        showToast("Undo", "#888");
+    }
     let connections = []; // [{id, sourceId, targetId, color}]
 
     // --- Connect mode ---
@@ -1087,9 +1298,10 @@
         const canvas = document.getElementById("canvas");
         btn.classList.toggle("active", connectMode);
         canvas.classList.toggle("connect-mode", connectMode);
-        if (!connectMode && connectSource) {
-            connectSource.classList.remove("connect-source");
-            connectSource = null;
+        if (!connectMode) {
+            if (connectSource) { connectSource.classList.remove("connect-source"); connectSource = null; }
+            connectSticky = false;
+            document.getElementById("connect-sticky-toggle").checked = false;
         }
     }
 
@@ -1172,8 +1384,9 @@
 
     async function ctxRename() {
         if (!ctxTargetNode) return;
+        const node = ctxTargetNode;
         closeCtxMenu();
-        const titleEl = ctxTargetNode.querySelector(".node-title, .start-label, .end-label, .note-text, .gate-label");
+        const titleEl = node.querySelector(".node-title, .start-label, .end-label, .note-text, .gate-label, .clock-name");
         if (!titleEl) return;
         const newName = await showModal("Rename", titleEl.textContent.trim(), "Rename");
         if (newName) titleEl.textContent = newName;
@@ -1181,6 +1394,7 @@
 
     function ctxDelete() {
         if (!ctxTargetNode) return;
+        pushUndoSnapshot();
         const id = ctxTargetNode.id;
         connections = connections.filter(c => c.sourceId !== id && c.targetId !== id);
         if (selectedNode === ctxTargetNode) selectedNode = null;
@@ -1188,6 +1402,18 @@
         closeCtxMenu();
         renderWires();
         evaluateAll();
+    }
+
+    function ctxConnect() {
+        if (!ctxTargetNode) return;
+        const node = ctxTargetNode;
+        closeCtxMenu();
+        if (!connectMode) toggleConnectMode();
+        if (connectSource) {
+            connectSource.classList.remove("connect-source");
+        }
+        connectSource = node;
+        node.classList.add("connect-source");
     }
 
     // Block browser native context menu everywhere on this page
@@ -1222,9 +1448,44 @@
     function ctxPaste() {
         closeCanvasCtxMenu();
         if (!copiedNodeData) return;
-        const rect = document.getElementById("canvas").getBoundingClientRect();
-        pasteNode(_canvasPasteX - rect.left, _canvasPasteY - rect.top);
+        const w = screenToWorld(_canvasPasteX, _canvasPasteY);
+        pasteNode(w.x, w.y);
     }
+
+    // --- Zoom (scroll wheel) ---
+    document.getElementById("canvas").addEventListener("wheel", (e) => {
+        e.preventDefault();
+        const factor = e.deltaY < 0 ? 1.1 : 0.9;
+        const r = document.getElementById("canvas").getBoundingClientRect();
+        const mx = e.clientX - r.left;
+        const my = e.clientY - r.top;
+        panX = mx - (mx - panX) * factor;
+        panY = my - (my - panY) * factor;
+        zoom = Math.min(4, Math.max(0.15, zoom * factor));
+        applyViewTransform();
+    }, { passive: false });
+
+    // --- Pan (middle mouse button) ---
+    let _panning = false, _panStartX, _panStartY, _panOriginX, _panOriginY;
+    document.getElementById("canvas").addEventListener("mousedown", (e) => {
+        if (e.button !== 1) return;
+        e.preventDefault();
+        _panning = true;
+        _panStartX = e.clientX; _panStartY = e.clientY;
+        _panOriginX = panX; _panOriginY = panY;
+        document.getElementById("canvas").classList.add("panning");
+    });
+    document.addEventListener("mousemove", (e) => {
+        if (!_panning) return;
+        panX = _panOriginX + (e.clientX - _panStartX);
+        panY = _panOriginY + (e.clientY - _panStartY);
+        applyViewTransform();
+    });
+    document.addEventListener("mouseup", (e) => {
+        if (e.button !== 1) return;
+        _panning = false;
+        document.getElementById("canvas").classList.remove("panning");
+    });
 
     // Right-click: hold → canvas ctx menu; Shift+right-click → connect mode; node → node ctx menu
     document.getElementById("canvas").addEventListener("mousedown", (e) => {
@@ -1239,6 +1500,104 @@
     document.addEventListener("mouseup", (e) => {
         if (e.button === 2) clearTimeout(_holdTimer);
     });
+
+    // --- Slash-to-delete ---
+    const slashCanvas = document.getElementById("slash-canvas");
+    const slashCtx = slashCanvas.getContext("2d");
+    let _slashing = false, _slashStartX = 0, _slashStartY = 0, _slashCurX = 0, _slashCurY = 0;
+
+    function resizeSlashCanvas() {
+        const el = document.getElementById("canvas");
+        slashCanvas.width = el.offsetWidth;
+        slashCanvas.height = el.offsetHeight;
+    }
+    window.addEventListener("resize", resizeSlashCanvas);
+    resizeSlashCanvas();
+
+    document.getElementById("canvas").addEventListener("mousedown", (e) => {
+        if (e.button !== 2 || e.target.closest(".node")) return;
+        _slashStartX = e.clientX;
+        _slashStartY = e.clientY;
+        _slashCurX = e.clientX;
+        _slashCurY = e.clientY;
+    });
+
+    document.addEventListener("mousemove", (e) => {
+        if (e.buttons !== 2) return;
+        const dx = e.clientX - _slashStartX, dy = e.clientY - _slashStartY;
+        if (!_slashing && Math.sqrt(dx*dx + dy*dy) > 8) {
+            _slashing = true;
+            clearTimeout(_holdTimer);
+            _holdFired = true;
+        }
+        if (!_slashing) return;
+        _slashCurX = e.clientX;
+        _slashCurY = e.clientY;
+        const r = document.getElementById("canvas").getBoundingClientRect();
+        slashCtx.clearRect(0, 0, slashCanvas.width, slashCanvas.height);
+        slashCtx.beginPath();
+        slashCtx.moveTo(_slashStartX - r.left, _slashStartY - r.top);
+        slashCtx.lineTo(_slashCurX - r.left, _slashCurY - r.top);
+        slashCtx.strokeStyle = "rgba(220,70,70,0.9)";
+        slashCtx.lineWidth = 2;
+        slashCtx.setLineDash([10, 5]);
+        slashCtx.stroke();
+        slashCtx.setLineDash([]);
+    });
+
+    document.addEventListener("mouseup", (e) => {
+        if (e.button !== 2) return;
+        const wasSlashing = _slashing;
+        _slashing = false;
+        slashCtx.clearRect(0, 0, slashCanvas.width, slashCanvas.height);
+        if (!wasSlashing) return;
+
+        const p1 = screenToWorld(_slashStartX, _slashStartY);
+        const p2 = screenToWorld(_slashCurX, _slashCurY);
+
+        const toDelete = connections.filter(c => {
+            const src = getNodeCenter(c.sourceId, "right");
+            const tgt = getNodeCenter(c.targetId, "left");
+            if (!src || !tgt) return false;
+            const cdx = Math.max(60, Math.abs(tgt.x - src.x) * 0.5);
+            return bezierCutsLine(
+                src.x, src.y, src.x + cdx, src.y,
+                tgt.x - cdx, tgt.y, tgt.x, tgt.y,
+                p1.x, p1.y, p2.x, p2.y
+            );
+        });
+
+        if (toDelete.length > 0) {
+            pushUndoSnapshot();
+            const deadIds = new Set(toDelete.map(c => c.id));
+            connections = connections.filter(c => !deadIds.has(c.id));
+            renderWires();
+            evaluateAll();
+            showToast(`Cut ${toDelete.length} wire${toDelete.length > 1 ? "s" : ""}`, "#cc5555");
+        }
+    });
+
+    function bezierCutsLine(sx, sy, cx1, cy1, cx2, cy2, ex, ey, lx1, ly1, lx2, ly2) {
+        const N = 40;
+        let px = sx, py = sy;
+        for (let i = 1; i <= N; i++) {
+            const t = i / N, u = 1 - t;
+            const qx = u*u*u*sx + 3*u*u*t*cx1 + 3*u*t*t*cx2 + t*t*t*ex;
+            const qy = u*u*u*sy + 3*u*u*t*cy1 + 3*u*t*t*cy2 + t*t*t*ey;
+            if (segmentsIntersect(px, py, qx, qy, lx1, ly1, lx2, ly2)) return true;
+            px = qx; py = qy;
+        }
+        return false;
+    }
+
+    function segmentsIntersect(x1, y1, x2, y2, x3, y3, x4, y4) {
+        const d1x = x2-x1, d1y = y2-y1, d2x = x4-x3, d2y = y4-y3;
+        const denom = d1x*d2y - d1y*d2x;
+        if (Math.abs(denom) < 1e-10) return false;
+        const t = ((x3-x1)*d2y - (y3-y1)*d2x) / denom;
+        const u = ((x3-x1)*d1y - (y3-y1)*d1x) / denom;
+        return t >= 0 && t <= 1 && u >= 0 && u <= 1;
+    }
 
     document.getElementById("canvas").addEventListener("contextmenu", (e) => {
         e.preventDefault();
@@ -1261,15 +1620,22 @@
             saveFlowchart();
             return;
         }
+        if ((e.ctrlKey || e.metaKey) && e.key === "z") {
+            e.preventDefault();
+            undo();
+            return;
+        }
         if (document.activeElement.tagName === "INPUT" || document.activeElement.isContentEditable) return;
 
         if (e.key === "Delete" || e.key === "Backspace") {
             if (selectedConnId) {
+                pushUndoSnapshot();
                 connections = connections.filter(c => c.id !== selectedConnId);
                 selectedConnId = null;
                 renderWires();
                 evaluateAll();
             } else if (selectedNodes.length > 0) {
+                pushUndoSnapshot();
                 const ids = new Set(selectedNodes.map(n => n.id));
                 connections = connections.filter(c => !ids.has(c.sourceId) && !ids.has(c.targetId));
                 selectedNodes.forEach(n => n.remove());
@@ -1277,6 +1643,7 @@
                 renderWires();
                 evaluateAll();
             } else if (selectedNode) {
+                pushUndoSnapshot();
                 const id = selectedNode.id;
                 connections = connections.filter(c => c.sourceId !== id && c.targetId !== id);
                 selectedNode.remove();
@@ -1523,7 +1890,7 @@
                 selectNode(node);
             }
         });
-        document.getElementById("canvas").appendChild(node);
+        document.getElementById("canvas-world").appendChild(node);
         makeDraggable(node);
         makeResizable(node);
     }
@@ -1537,10 +1904,13 @@
             connectSource = null;
         } else {
             connCounter++;
-            connections.push({ id: "conn-" + connCounter, sourceId: connectSource.id, targetId: node.id, color: currentAccent });
+            pushUndoSnapshot();
+            const newConn = { id: "conn-" + connCounter, sourceId: connectSource.id, targetId: node.id, color: currentAccent };
+            connections.push(newConn);
+            connectionHistory.push(newConn.id);
             connectSource.classList.remove("connect-source");
             connectSource = null;
-            toggleConnectMode();
+            if (!connectSticky) toggleConnectMode();
             renderWires();
             evaluateAll();
         }
@@ -1548,6 +1918,7 @@
 
     // --- Inline editing ---
     function makeEditable(el) {
+        pushUndoSnapshot();
         const original = el.textContent;
         el.contentEditable = "true";
         el.focus();
@@ -1574,22 +1945,27 @@
 
     // --- Node creators ---
     function addStartNode() {
+        pushUndoSnapshot();
         const { node, id } = spawnNode(["start-node"]);
         node.innerHTML = `<div class="start-label">START</div>`;
+        node.querySelector(".start-label").addEventListener("dblclick", e => { e.stopPropagation(); makeEditable(e.target); });
         node.classList.add("completed");
         attachNode(node);
         evaluateAll();
     }
 
     function addEndNode() {
+        pushUndoSnapshot();
         const { node } = spawnNode(["end-node"]);
         node.innerHTML = `<div class="end-label">END</div><div class="node-status">Waiting</div>`;
+        node.querySelector(".end-label").addEventListener("dblclick", e => { e.stopPropagation(); makeEditable(e.target); });
         attachNode(node);
     }
 
     async function addTaskNode(isChecklist) {
         const name = await showModal(isChecklist ? "Name your checklist" : "Name your task", "Task name...");
         if (!name) return;
+        pushUndoSnapshot();
         const { node, id } = spawnNode();
         let checklistHTML = "";
         if (isChecklist) {
@@ -1624,6 +2000,7 @@
     async function addNoteNode() {
         const text = await showModal("Add a note", "Note text...", "Add");
         if (!text) return;
+        pushUndoSnapshot();
         const { node } = spawnNode(["note-node"]);
         node.innerHTML = `<div class="note-text">${text}</div>`;
         node.querySelector(".note-text").addEventListener("dblclick", (e) => {
@@ -1634,6 +2011,7 @@
     }
 
     function addGateNode(type) {
+        pushUndoSnapshot();
         const { node } = spawnNode(["gate-node"]);
         node.dataset.gateType = type;
         node.innerHTML = `<div class="gate-label" style="color:${currentAccent}">${type}</div><div class="node-status">0</div>`;
@@ -1648,6 +2026,7 @@
         handle.addEventListener("mousedown", (e) => {
             e.stopPropagation();
             e.preventDefault();
+            pushUndoSnapshot();
             resizing = true;
             startX = e.clientX;
             startY = e.clientY;
@@ -1657,8 +2036,8 @@
 
         document.addEventListener("mousemove", (e) => {
             if (!resizing) return;
-            node.style.width    = Math.max(120, startW + e.clientX - startX) + "px";
-            node.style.minHeight = Math.max(48,  startH + e.clientY - startY) + "px";
+            node.style.width     = Math.max(120, startW + (e.clientX - startX) / zoom) + "px";
+            node.style.minHeight = Math.max(48,  startH + (e.clientY - startY) / zoom) + "px";
             renderWires();
         });
 
@@ -1673,6 +2052,7 @@
         node.addEventListener("mousedown", (e) => {
             if (connectMode) return;
             if (e.target.closest("input, label, .resize-handle")) return;
+            pushUndoSnapshot();
             dragging = true;
             startX = e.clientX; startY = e.clientY;
             startLeft = parseInt(node.style.left) || 0;
@@ -1693,8 +2073,8 @@
 
         document.addEventListener("mousemove", (e) => {
             if (!dragging) return;
-            const dx = e.clientX - startX;
-            const dy = e.clientY - startY;
+            const dx = (e.clientX - startX) / zoom;
+            const dy = (e.clientY - startY) / zoom;
             if (groupStarts.length > 0) {
                 groupStarts.forEach(({ node: n, left, top }) => {
                     n.style.left = snap(left + dx) + "px";
@@ -1721,6 +2101,7 @@
     function deleteChecklistItem(e, btn) {
         e.stopPropagation();
         e.preventDefault();
+        pushUndoSnapshot();
         const item = btn.closest(".checklist-item");
         const nodeId = item.closest(".node").id;
         item.remove();
@@ -1730,6 +2111,7 @@
     async function addChecklistItem(nodeId) {
         const text = await showModal("Add checklist item", "Item name...", "Add");
         if (!text) return;
+        pushUndoSnapshot();
         const checklist = document.querySelector(`#${nodeId} .checklist`);
         if (!checklist) return;
         const count = checklist.querySelectorAll(".checklist-item").length;
@@ -1746,8 +2128,165 @@
         onChecklistChange(null, nodeId);
     }
 
+    // --- Notifications ---
+    function requestNotifyPermission() {
+        if ("Notification" in window && Notification.permission === "default") {
+            Notification.requestPermission();
+        }
+    }
+
+    function notify(title, body) {
+        if (!("Notification" in window) || Notification.permission !== "granted") return;
+        const n = new Notification(title, { body, icon: "" });
+        n.onclick = () => { window.focus(); n.close(); };
+    }
+
     // --- Clock nodes ---
     const clocks = {}; // id -> { remaining, total, interval, running }
+    const alarms = {}; // id -> { targetTime: "HH:MM", interval: null, triggered: false }
+
+    let _alarmAmPm = "AM";
+    let _alarmLoop = false;
+
+    function selectAmPm(val) {
+        _alarmAmPm = val;
+        document.getElementById("ampm-am").classList.toggle("active", val === "AM");
+        document.getElementById("ampm-pm").classList.toggle("active", val === "PM");
+    }
+
+    function toggleAlarmLoop() {
+        _alarmLoop = !_alarmLoop;
+        document.getElementById("alarm-loop-track").classList.toggle("on", _alarmLoop);
+        document.getElementById("alarm-loop-thumb").classList.toggle("on", _alarmLoop);
+        document.getElementById("alarm-duration-row").classList.toggle("visible", _alarmLoop);
+    }
+
+    function addAlarmNode() {
+        _alarmAmPm = "AM";
+        _alarmLoop = false;
+        document.getElementById("ampm-am").classList.add("active");
+        document.getElementById("ampm-pm").classList.remove("active");
+        document.getElementById("alarm-loop-track").classList.remove("on");
+        document.getElementById("alarm-loop-thumb").classList.remove("on");
+        document.getElementById("alarm-duration-row").classList.remove("visible");
+        document.getElementById("alarm-ring-duration").value = "5";
+        const inp = document.getElementById("alarm-time-input");
+        inp.value = "";
+        document.getElementById("alarm-modal-overlay").classList.add("visible");
+        setTimeout(() => inp.focus(), 50);
+    }
+
+    function cancelAlarmModal() {
+        document.getElementById("alarm-modal-overlay").classList.remove("visible");
+    }
+
+    function confirmAlarmModal() {
+        const raw = document.getElementById("alarm-time-input").value.trim();
+        const match = raw.match(/^(\d{1,2}):(\d{2})$/);
+        if (!match) { showToast("Invalid time — use hh:mm", "#cc5555"); return; }
+        let hh12 = parseInt(match[1]);
+        const mm = match[2];
+        if (hh12 < 1 || hh12 > 12 || parseInt(mm) > 59) { showToast("Invalid time", "#cc5555"); return; }
+        let hh24 = hh12 % 12;
+        if (_alarmAmPm === "PM") hh24 += 12;
+        const targetTime = `${hh24.toString().padStart(2, "0")}:${mm}`;
+        const displayTime = `${hh12.toString().padStart(2, "0")}:${mm} ${_alarmAmPm}`;
+        const ringDuration = Math.max(1, parseInt(document.getElementById("alarm-ring-duration").value) || 5);
+        requestNotifyPermission();
+        cancelAlarmModal();
+        pushUndoSnapshot();
+        const { node, id } = spawnNode(["alarm-node"]);
+        alarms[id] = { targetTime, interval: null, resetTimeout: null, triggered: false, loop: _alarmLoop, ringDuration };
+        node.innerHTML = `
+            <div class="alarm-label">⏱ <span class="alarm-name">ALARM</span></div>
+            <div class="alarm-live" id="ac-${id}">--:--:-- --</div>
+            <div class="alarm-target">rings at <span>${displayTime}</span>${_alarmLoop ? ` · <span class="alarm-loop-badge">↺ ${ringDuration}m</span>` : ""}</div>
+            <div class="node-status">Waiting</div>
+        `;
+        node.querySelector(".alarm-name").addEventListener("dblclick", e => { e.stopPropagation(); makeEditable(e.target); });
+        startAlarm(id, node);
+        attachNode(node);
+    }
+
+    function triggerAlarm(id, node) {
+        const alarm = alarms[id];
+        alarm.triggered = true;
+        node.classList.add("completed");
+        const status = node.querySelector(".node-status");
+        if (status) status.textContent = "Triggered!";
+        evaluateAll();
+        const name = node.querySelector(".alarm-name")?.textContent || "Alarm";
+        notify("⏱ " + name, `Your alarm has triggered.${alarm.loop ? ` Resets in ${alarm.ringDuration} min.` : ""}`);
+        if (alarm.loop) {
+            // Schedule reset after ringDuration minutes, then keep watching
+            if (alarm.resetTimeout) clearTimeout(alarm.resetTimeout);
+            alarm.resetTimeout = setTimeout(() => {
+                alarm.triggered = false;
+                alarm.resetTimeout = null;
+                node.classList.remove("completed");
+                const s = node.querySelector(".node-status");
+                if (s) s.textContent = "Waiting";
+                evaluateAll();
+            }, (alarm.ringDuration || 5) * 60 * 1000);
+        } else {
+            // One-shot: stop the interval
+            if (alarm.interval) { clearInterval(alarm.interval); alarm.interval = null; }
+        }
+    }
+
+    function startAlarm(id, node) {
+        const alarm = alarms[id];
+        if (alarm.interval) clearInterval(alarm.interval);
+        if (alarm.resetTimeout) clearTimeout(alarm.resetTimeout);
+
+        const now = new Date();
+        const [tHH, tMM] = alarm.targetTime.split(":").map(Number);
+        const targetMinutes = tHH * 60 + tMM;
+        const nowMinutes = now.getHours() * 60 + now.getMinutes();
+
+        if (alarm.loop) {
+            const ringEnd = targetMinutes + (alarm.ringDuration || 5);
+            if (nowMinutes >= targetMinutes && nowMinutes < ringEnd) {
+                // Currently inside the ring window — trigger with remaining duration
+                const remainingMs = (ringEnd - nowMinutes) * 60 * 1000 - now.getSeconds() * 1000;
+                alarm.triggered = true;
+                node.classList.add("completed");
+                const status = node.querySelector(".node-status");
+                if (status) status.textContent = "Triggered!";
+                evaluateAll();
+                alarm.resetTimeout = setTimeout(() => {
+                    alarm.triggered = false;
+                    alarm.resetTimeout = null;
+                    node.classList.remove("completed");
+                    const s = node.querySelector(".node-status");
+                    if (s) s.textContent = "Waiting";
+                    evaluateAll();
+                }, remainingMs);
+            }
+            // If past ring window: just let interval watch for next occurrence
+        } else {
+            // One-shot: trigger immediately if already past target time
+            if (nowMinutes > targetMinutes) {
+                triggerAlarm(id, node);
+                return;
+            }
+        }
+
+        alarm.interval = setInterval(() => {
+            const now = new Date();
+            const hh24 = now.getHours();
+            const mm = now.getMinutes().toString().padStart(2, "0");
+            const ss = now.getSeconds().toString().padStart(2, "0");
+            const ampm = hh24 >= 12 ? "PM" : "AM";
+            const hh12 = (hh24 % 12 || 12).toString().padStart(2, "0");
+            const cur = document.getElementById(`ac-${id}`);
+            if (cur) cur.textContent = `${hh12}:${mm}:${ss} ${ampm}`;
+            const hh = hh24.toString().padStart(2, "0");
+            if (!alarm.triggered && `${hh}:${mm}` === alarm.targetTime && ss === "00") {
+                triggerAlarm(id, node);
+            }
+        }, 1000);
+    }
 
     async function addClockNode() {
         const raw = await showModal("Set timer duration", "e.g. 25 or 1:30 (min:sec)", "Add Timer");
@@ -1761,12 +2300,13 @@
             totalSeconds = Math.round(parseFloat(raw) * 60);
         }
         if (!totalSeconds || totalSeconds <= 0) return;
-
+        requestNotifyPermission();
+        pushUndoSnapshot();
         const { node, id } = spawnNode(["clock-node"]);
         clocks[id] = { remaining: totalSeconds, total: totalSeconds, interval: null, running: false };
 
         node.innerHTML = `
-            <div class="clock-label">⏱ TIMER</div>
+            <div class="clock-label">⏱ <span class="clock-name">TIMER</span></div>
             <div class="clock-display" id="cd-${id}">${formatTime(totalSeconds)}</div>
             <div class="clock-controls">
                 <button class="clock-btn" id="cb-start-${id}" onclick="toggleClock('${id}')">Start</button>
@@ -1775,6 +2315,7 @@
             <div class="node-status">Waiting</div>
         `;
 
+        node.querySelector(".clock-name").addEventListener("dblclick", e => { e.stopPropagation(); makeEditable(e.target); });
         node.addEventListener("dblclick", (e) => {
             e.stopPropagation();
             if (e.target.closest(".clock-display")) editClockDuration(id);
@@ -1822,6 +2363,8 @@
                 node.classList.add("completed");
                 const st = node.querySelector(".node-status");
                 if (st) st.textContent = "Fired!";
+                const name = node.querySelector(".clock-name")?.textContent || "Timer";
+                notify("⏱ " + name, "Your timer has finished.");
             }
             evaluateAll();
         }
@@ -1939,6 +2482,7 @@
     // --- Toggle complete ---
     function toggleComplete(node) {
         if (node.classList.contains("locked")) return;
+        pushUndoSnapshot();
         const status = node.querySelector(".node-status");
         if (node.classList.contains("completed")) {
             node.classList.remove("completed");
@@ -2060,7 +2604,7 @@
             `</svg>`;
         const canvas = document.getElementById("canvas");
         canvas.style.backgroundImage = `url("data:image/svg+xml,${encodeURIComponent(svgStr)}")`;
-        canvas.style.backgroundSize = `${GRID}px ${GRID}px`;
+        applyViewTransform();
     }
 
     function toggleLightMode() {
@@ -2072,6 +2616,13 @@
         document.body.classList.toggle("light-mode", enabled);
         _applyGridSvg();
         if (enabled) {
+            currentAccent = "#8a5028";
+            connections.forEach(c => c.color = "#8a5028");
+            applyAccent("#8a5028");
+            renderWires();
+            document.querySelectorAll(".color-swatch").forEach(s => s.classList.remove("active"));
+            const caramelSwatch = document.querySelector(`.color-swatch[data-color="#8a5028"]`);
+            if (caramelSwatch) caramelSwatch.classList.add("active");
             const lc = "#2a2018";
             document.getElementById("ui-theme-picker").value = lc;
             const wrap = document.querySelector(".theme-picker-wrap");
@@ -2154,6 +2705,7 @@ function resetAll() {
             : node.classList.contains("end-node") ? "end"
             : node.classList.contains("gate-node") ? "gate"
             : node.classList.contains("clock-node") ? "clock"
+            : node.classList.contains("alarm-node") ? "alarm"
             : node.classList.contains("note-node") ? "note"
             : node.querySelector(".checklist") ? "checklist"
             : "task";
@@ -2170,6 +2722,7 @@ function resetAll() {
         };
         if (node.dataset.gateType) nd.gateType = node.dataset.gateType;
         if (type === "clock" && clocks[node.id]) nd.clockData = { total: clocks[node.id].total };
+        if (type === "alarm" && alarms[node.id]) nd.alarmData = { targetTime: alarms[node.id].targetTime, triggered: alarms[node.id].triggered, loop: alarms[node.id].loop, ringDuration: alarms[node.id].ringDuration };
         return nd;
     }
 
@@ -2190,7 +2743,7 @@ function resetAll() {
         if (nd.completed) node.classList.add("completed");
         if (nd.gateType) node.dataset.gateType = nd.gateType;
 
-        const titleEl = node.querySelector(".node-title");
+        const titleEl = node.querySelector(".node-title, .start-label, .end-label");
         if (titleEl) titleEl.addEventListener("dblclick", e => { e.stopPropagation(); makeEditable(e.target); });
 
         if (nd.type === "task") {
@@ -2201,9 +2754,18 @@ function resetAll() {
             const nt = node.querySelector(".note-text");
             if (nt) nt.addEventListener("dblclick", e => { e.stopPropagation(); makeEditable(e.target); });
         } else if (nd.type === "clock") {
+            const cn = node.querySelector(".clock-name");
+            if (cn) cn.addEventListener("dblclick", e => { e.stopPropagation(); makeEditable(e.target); });
             node.addEventListener("dblclick", e => { e.stopPropagation(); if (e.target.closest(".clock-display")) editClockDuration(node.id); });
             const total = nd.clockData?.total || 0;
             if (total > 0) clocks[node.id] = { remaining: total, total, interval: null, running: false };
+        } else if (nd.type === "alarm") {
+            const an = node.querySelector(".alarm-name");
+            if (an) an.addEventListener("dblclick", e => { e.stopPropagation(); makeEditable(e.target); });
+            if (nd.alarmData) {
+                alarms[node.id] = { targetTime: nd.alarmData.targetTime, interval: null, resetTimeout: null, triggered: nd.alarmData.triggered, loop: nd.alarmData.loop || false, ringDuration: nd.alarmData.ringDuration || 5 };
+                if (!nd.alarmData.triggered || nd.alarmData.loop) startAlarm(node.id, node);
+            }
         }
 
         attachNode(node);
@@ -2241,6 +2803,7 @@ function resetAll() {
         document.querySelectorAll(".node").forEach(n => n.remove());
         connections = []; connCounter = 0; nodeCounter = 0;
         Object.keys(clocks).forEach(k => { clearInterval(clocks[k].interval); delete clocks[k]; });
+        Object.keys(alarms).forEach(k => { clearInterval(alarms[k].interval); clearTimeout(alarms[k].resetTimeout); delete alarms[k]; });
 
         if (data.gridSize) {
             const input = document.getElementById("grid-size-input");
@@ -2314,6 +2877,13 @@ function resetAll() {
             document.body.classList.add("light-mode");
             document.getElementById("light-mode-toggle").checked = true;
             _applyGridSvg();
+            currentAccent = "#8a5028";
+            connections.forEach(c => c.color = "#8a5028");
+            applyAccent("#8a5028");
+            renderWires();
+            document.querySelectorAll(".color-swatch").forEach(s => s.classList.remove("active"));
+            const caramelSwatch = document.querySelector(`.color-swatch[data-color="#8a5028"]`);
+            if (caramelSwatch) caramelSwatch.classList.add("active");
             const lc = "#2a2018";
             document.getElementById("ui-theme-picker").value = lc;
             const wrap = document.querySelector(".theme-picker-wrap");

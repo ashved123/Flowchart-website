@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Dashboard — Flowchart Builder</title>
+    <title>Dashboard — Logiflow</title>
     <style id="dash-theme"></style>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -82,6 +82,9 @@
             color: #3a2a50;
             font-size: 0.88rem;
             transition: all 0.18s;
+            font-family: inherit;
+            width: 100%;
+            outline: none;
         }
         .new-card:hover {
             border-color: #7a30b0;
@@ -401,7 +404,7 @@
 </head>
 <body class="{{ 'light-mode' if user_prefs.get('lightMode') else '' }}">
     <header>
-        <h1>Flowchart <span>Builder</span></h1>
+        <h1>Logi<span>flow</span></h1>
         <div class="header-right">
             <span>{{ username }}</span>
             <button class="header-btn settings-gear" onclick="openSettings()" title="Settings">⚙</button>
@@ -412,10 +415,10 @@
     <main>
         <div class="page-title">Your Flowcharts</div>
         <div class="grid">
-            <a href="/new_flowchart" class="new-card">
+            <button class="new-card" onclick="openNewModal()">
                 <span class="plus">+</span>
                 <span>New Flowchart</span>
-            </a>
+            </button>
 
             {% if flowcharts %}
                 {% for fc in flowcharts %}
@@ -438,6 +441,18 @@
         <div class="fc-dd-item" onclick="renameFc()">✎ Rename</div>
         <div class="fc-dd-divider"></div>
         <div class="fc-dd-item danger" onclick="deleteFc()">✕ Delete</div>
+    </div>
+
+    <!-- New flowchart modal -->
+    <div class="dash-overlay" id="new-modal" onclick="closeNewModal()">
+        <div class="dash-modal" onclick="event.stopPropagation()">
+            <h3>New Flowchart</h3>
+            <input class="dash-input" id="new-fc-input" type="text" placeholder="Flowchart name…" maxlength="80">
+            <div class="dash-modal-btns">
+                <button class="dash-btn" onclick="closeNewModal()">Cancel</button>
+                <button class="dash-btn primary" onclick="doCreateFlowchart()">Create</button>
+            </div>
+        </div>
     </div>
 
     <!-- Rename modal -->
@@ -473,6 +488,13 @@
                     <div class="color-swatch" style="background:#207040" data-color="#207040" title="Green" onclick="setTheme(this)"></div>
                     <div class="color-swatch" style="background:#904020" data-color="#904020" title="Ember" onclick="setTheme(this)"></div>
                     <div class="color-swatch" style="background:#606060" data-color="#606060" title="Mono" onclick="setTheme(this)"></div>
+                </div>
+                <div class="swatch-row" style="margin-top:6px;">
+                    <div class="color-swatch" style="background:#8a5028" data-color="#8a5028" title="Caramel" onclick="setTheme(this)"></div>
+                    <div class="color-swatch" style="background:#904040" data-color="#904040" title="Brick" onclick="setTheme(this)"></div>
+                    <div class="color-swatch" style="background:#4a7845" data-color="#4a7845" title="Sage" onclick="setTheme(this)"></div>
+                    <div class="color-swatch" style="background:#3a5888" data-color="#3a5888" title="Denim" onclick="setTheme(this)"></div>
+                    <div class="color-swatch" style="background:#785870" data-color="#785870" title="Mauve" onclick="setTheme(this)"></div>
                     <label class="color-picker-wrap" title="Custom color">
                         Custom
                         <input type="color" id="theme-picker" value="#7a30b0" oninput="setThemeFromPicker(this.value)">
@@ -608,7 +630,11 @@
             const enabled = document.getElementById("lm-toggle").checked;
             document.body.classList.toggle("light-mode", enabled);
             if (enabled) {
-                document.getElementById("dash-theme").textContent = "";
+                applyThemeColor("#8a5028");
+                document.getElementById("theme-picker").value = "#8a5028";
+                document.querySelectorAll("#settings-panel .color-swatch").forEach(s => s.classList.remove("active"));
+                const caramelSwatch = document.querySelector(`#settings-panel .color-swatch[data-color="#8a5028"]`);
+                if (caramelSwatch) caramelSwatch.classList.add("active");
             } else {
                 const tc = document.getElementById("theme-picker").value;
                 applyThemeColor(tc);
@@ -675,6 +701,37 @@
             if (!confirm("Delete your account and all flowcharts? This cannot be undone.")) return;
             fetch("/delete_account", { method: "POST" }).then(() => { window.location.href = "/login"; });
         }
+
+        // ── New flowchart ──
+        function openNewModal() {
+            document.getElementById("new-fc-input").value = "";
+            document.getElementById("new-modal").classList.add("visible");
+            setTimeout(() => document.getElementById("new-fc-input").focus(), 50);
+        }
+
+        function closeNewModal() {
+            document.getElementById("new-modal").classList.remove("visible");
+        }
+
+        function doCreateFlowchart() {
+            const name = document.getElementById("new-fc-input").value.trim();
+            if (!name) return;
+            const form = document.createElement("form");
+            form.method = "POST";
+            form.action = "/create_flowchart";
+            const input = document.createElement("input");
+            input.type = "hidden";
+            input.name = "flowchart_name";
+            input.value = name;
+            form.appendChild(input);
+            document.body.appendChild(form);
+            form.submit();
+        }
+
+        document.getElementById("new-fc-input").addEventListener("keydown", e => {
+            if (e.key === "Enter") doCreateFlowchart();
+            if (e.key === "Escape") closeNewModal();
+        });
 
         // ── Flowchart rename / delete ──
         let _activeFcId = null, _activeFcName = null, _activeFcCard = null;
@@ -781,11 +838,11 @@
         (function() {
             if (userPrefs.lightMode) document.getElementById("lm-toggle").checked = true;
 
-            const tc = userPrefs.themeColor || "#7a30b0";
+            const tc = userPrefs.lightMode ? "#8a5028" : (userPrefs.themeColor || "#7a30b0");
             document.getElementById("theme-picker").value = tc;
             const matchSwatch = document.querySelector(`#settings-panel .color-swatch[data-color="${tc}"]`);
             if (matchSwatch) matchSwatch.classList.add("active");
-            if (!userPrefs.lightMode) applyThemeColor(tc);
+            applyThemeColor(tc);
         })();
     </script>
 </body>

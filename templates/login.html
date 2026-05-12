@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Login — Flowchart Builder</title>
+    <title>Login — Logiflow</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -83,12 +83,142 @@
         }
         .footer-link a { color: #8a45c0; text-decoration: none; }
         .footer-link a:hover { color: #b070e0; text-decoration: underline; }
+
+        #bg-canvas {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none;
+        }
+        body > .card {
+            position: relative;
+            z-index: 1;
+        }
+
+        .theme-toggle {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.8rem;
+            color: #444;
+            cursor: pointer;
+            user-select: none;
+        }
+        .toggle-track {
+            width: 36px; height: 20px;
+            background: #2a1a40;
+            border-radius: 10px;
+            position: relative;
+            transition: background 0.2s;
+            flex-shrink: 0;
+        }
+        .toggle-thumb {
+            width: 14px; height: 14px;
+            background: #7a30b0;
+            border-radius: 50%;
+            position: absolute;
+            top: 3px; left: 3px;
+            transition: left 0.2s, background 0.2s;
+        }
+        body.light-mode .toggle-track { background: #c8b8a4; }
+        body.light-mode .toggle-thumb { left: 19px; background: #6a4e38; }
+        body.light-mode .theme-toggle { color: #7a6858; }
+
+        body.light-mode { background: #d8cfc4; color: #261e16; }
+        body.light-mode .card {
+            background: linear-gradient(160deg, #d4ccbf 0%, #ccc4b8 100%);
+            border-color: #a8957e;
+            box-shadow: 0 24px 50px rgba(50,30,10,0.15), 0 4px 16px rgba(80,50,20,0.1);
+        }
+        body.light-mode .card-header h1 { color: #261e16; }
+        body.light-mode .card-header p { color: #7a6858; }
+        body.light-mode .field label { color: #6a5848; }
+        body.light-mode .field input { background: #cec4b8; border-color: #a8957e; color: #261e16; }
+        body.light-mode .field input:focus { border-color: #6a4e38; box-shadow: 0 0 0 3px rgba(100,70,40,0.12); }
+        body.light-mode .submit-btn {
+            background: linear-gradient(160deg, #3a3028, #2a2018);
+            border-color: #584840; color: #f0e8de;
+            box-shadow: 0 4px 14px rgba(40,25,10,0.25);
+        }
+        body.light-mode .submit-btn:hover {
+            background: linear-gradient(160deg, #4a3e32, #3a2e22);
+            box-shadow: 0 6px 18px rgba(40,25,10,0.35);
+        }
+        body.light-mode .footer-link { color: #7a6858; }
+        body.light-mode .footer-link a { color: #6a4e38; }
+        body.light-mode .footer-link a:hover { color: #3a2e22; }
     </style>
 </head>
 <body>
+<script>if (localStorage.getItem("lightMode") === "1") document.body.classList.add("light-mode");</script>
+<canvas id="bg-canvas"></canvas>
+<script>
+(function() {
+    const canvas = document.getElementById("bg-canvas");
+    const ctx = canvas.getContext("2d");
+    const NODE_COUNT = 90;
+    const CONNECT_DIST = 160;
+    let nodes = [];
+
+    function resize() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+    function rand(min, max) { return min + Math.random() * (max - min); }
+
+    function initNodes() {
+        nodes = [];
+        for (let i = 0; i < NODE_COUNT; i++) {
+            nodes.push({ x: rand(0, canvas.width), y: rand(0, canvas.height),
+                vx: rand(-0.28, 0.28), vy: rand(-0.28, 0.28),
+                r: rand(3.5, 7), pulse: rand(0, Math.PI * 2) });
+        }
+    }
+
+    function draw() {
+        const light = document.body.classList.contains("light-mode");
+        const nodeColor = light ? "100,65,30" : "140,70,210";
+        const lineColor = light ? "80,50,20"  : "110,40,180";
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        for (let i = 0; i < nodes.length; i++) {
+            for (let j = i + 1; j < nodes.length; j++) {
+                const dx = nodes[i].x - nodes[j].x, dy = nodes[i].y - nodes[j].y;
+                const dist = Math.sqrt(dx*dx + dy*dy);
+                if (dist < CONNECT_DIST) {
+                    ctx.beginPath();
+                    ctx.strokeStyle = `rgba(${lineColor},${(1 - dist / CONNECT_DIST) * 0.7})`;
+                    ctx.lineWidth = 1;
+                    ctx.moveTo(nodes[i].x, nodes[i].y);
+                    ctx.lineTo(nodes[j].x, nodes[j].y);
+                    ctx.stroke();
+                }
+            }
+        }
+        const t = Date.now() / 1000;
+        for (const n of nodes) {
+            const glow = 0.6 + 0.35 * Math.sin(t * 1.1 + n.pulse);
+            ctx.beginPath();
+            ctx.arc(n.x, n.y, n.r, 0, Math.PI * 2);
+            ctx.fillStyle = `rgba(${nodeColor},${glow})`;
+            ctx.fill();
+        }
+    }
+
+    function update() {
+        for (const n of nodes) {
+            n.x += n.vx; n.y += n.vy;
+            if (n.x < -20) n.x = canvas.width + 20;
+            if (n.x > canvas.width + 20) n.x = -20;
+            if (n.y < -20) n.y = canvas.height + 20;
+            if (n.y > canvas.height + 20) n.y = -20;
+        }
+    }
+
+    window.addEventListener("resize", resize);
+    resize(); initNodes();
+    (function loop() { update(); draw(); requestAnimationFrame(loop); })();
+})();
+</script>
     <div class="card">
         <div class="card-header">
-            <h1>Flowchart Builder</h1>
+            <h1>Logiflow</h1>
             <p>Sign in to your account</p>
         </div>
 
@@ -111,6 +241,16 @@
         <div class="footer-link">
             No account? <a href="/register">Create one</a>
         </div>
+        <label class="theme-toggle" onclick="toggleTheme()">
+            <div class="toggle-track"><div class="toggle-thumb"></div></div>
+            <span>Dark mode</span>
+        </label>
     </div>
+    <script>
+        function toggleTheme() {
+            const on = document.body.classList.toggle("light-mode");
+            localStorage.setItem("lightMode", on ? "1" : "0");
+        }
+    </script>
 </body>
 </html>
