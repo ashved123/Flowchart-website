@@ -106,11 +106,13 @@
         #snap-label { font-size: 0.8rem; color: #777; display: flex; align-items: center; gap: 6px; cursor: pointer; width: 100%; }
         #snap-label input { accent-color: #8a35c0; cursor: pointer; width: 14px; height: 14px; }
 
-        #slash-canvas {
+        #slash-svg {
             position: absolute;
             inset: 0;
-            z-index: 10;
+            width: 100%; height: 100%;
+            z-index: 20;
             pointer-events: none;
+            overflow: visible;
         }
 
         #wire-svg {
@@ -170,6 +172,34 @@
 
         .note-node { background: #111108; border-style: dashed; min-width: 160px; }
 
+        .custom-type-node { background: linear-gradient(150deg,#100d18,#08060f); min-width: 120px; padding: 0; overflow: hidden; border-width: 2px; }
+        .ct-header { padding: 7px 12px 6px; border-bottom: 1px solid rgba(255,255,255,0.07); display: flex; align-items: center; gap: 7px; }
+        .ct-badge { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+        .ct-type-name { font-size: 0.88rem; font-weight: bold; color: #eee; }
+        .ct-io-row { padding: 4px 12px 7px; font-size: 0.7rem; color: #555; }
+        body.light-mode .custom-type-node { background: linear-gradient(150deg,#d4ccbe,#ccc4b6); }
+        body.light-mode .ct-type-name { color: #261e16; }
+        body.light-mode .ct-io-row { color: #9a8878; }
+        /* Custom type node port dots */
+        .ct-ports { display: flex; justify-content: space-between; padding: 5px 8px 6px; gap: 8px; min-height: 28px; }
+        .ct-in-col, .ct-out-col { display: flex; flex-direction: column; gap: 5px; }
+        .ct-out-col { align-items: flex-end; }
+        .ct-port-row { display: flex; align-items: center; gap: 5px; min-width: 0; }
+        .ct-port-row-out { flex-direction: row-reverse; }
+        .ct-port { width: 13px; height: 13px; border-radius: 50%; border: 2px solid #5020a0; background: #1a0828; cursor: crosshair; flex-shrink: 0; transition: background 0.12s, transform 0.12s; box-shadow: 0 0 4px rgba(0,0,0,0.6); }
+        .ct-port:hover { transform: scale(1.4); }
+        .ct-port-in { border-color: #5020a0; }
+        .ct-port-out { border-color: #8a30c0; }
+        .ct-port-in:hover { background: #5020a0; }
+        .ct-port-out:hover { background: #8a30c0; }
+        .ct-port-label { font-size: 0.67rem; color: #666; white-space: nowrap; overflow: hidden; max-width: 64px; text-overflow: ellipsis; }
+        body.light-mode .ct-port { background: #c8bfb4; }
+        body.light-mode .ct-port-in { border-color: #6a7858; }
+        body.light-mode .ct-port-out { border-color: #88608a; }
+        body.light-mode .ct-port-in:hover { background: #8aaa78; }
+        body.light-mode .ct-port-out:hover { background: #9878a0; }
+        body.light-mode .ct-port-label { color: #9a8878; }
+
         .checklist { margin-top: 8px; border-top: 1px solid #1e1e24; padding-top: 6px; }
         .checklist-item {
             display: flex; align-items: center; gap: 6px;
@@ -220,6 +250,91 @@
         .alarm-label { font-size: 0.75rem; color: var(--accent, #a08060); opacity: 0.75; letter-spacing: 2px; margin-bottom: 6px; }
         .alarm-name { cursor: text; border-radius: 3px; padding: 0 2px; transition: background 0.15s; }
         .alarm-name:hover { background: rgba(255,255,255,0.08); }
+        /* Node Editor Modal */
+        #node-editor-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.82); z-index:1200; align-items:center; justify-content:center; }
+        #node-editor-overlay.visible { display:flex; }
+        #node-editor-modal { background:linear-gradient(160deg,#0e0e14,#08080f); border:1px solid #5a20a0; border-radius:14px; width:88vw; height:82vh; max-width:1100px; display:flex; flex-direction:column; box-shadow:0 32px 80px rgba(0,0,0,0.95),0 6px 28px rgba(100,20,180,0.28); overflow:hidden; }
+        #ne-header { display:flex; align-items:center; gap:10px; padding:14px 18px; border-bottom:1px solid #3a1a60; flex-shrink:0; }
+        #ne-name-input { flex:1; background:#0d0d12; border:1px solid #3a1a55; border-radius:7px; padding:8px 12px; color:#eee; font-size:0.95rem; outline:none; transition:border-color 0.15s,box-shadow 0.15s; }
+        #ne-name-input:focus { border-color:#7a30b0; box-shadow:0 0 0 3px rgba(122,48,176,0.15); }
+        #ne-name-input::placeholder { color:#3a3a4a; }
+        #ne-color-input { width:34px; height:34px; border:2px solid #5a1a80; border-radius:6px; cursor:pointer; padding:2px; background:none; flex-shrink:0; }
+        #ne-close-btn { background:transparent; border:1px solid #3a1a55; border-radius:6px; color:#777; font-size:1rem; width:32px; height:32px; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:all 0.15s; flex-shrink:0; }
+        #ne-close-btn:hover { border-color:#cc5555; color:#cc5555; }
+        #ne-toolbar { display:flex; align-items:center; gap:6px; padding:8px 14px; border-bottom:1px solid #24143a; flex-shrink:0; flex-wrap:wrap; }
+        .ne-tb-btn { background:linear-gradient(160deg,#1c1c24,#101016); border:1px solid #3a1a55; border-radius:6px; color:#bbb; font-size:0.8rem; padding:6px 12px; cursor:pointer; transition:all 0.15s; }
+        .ne-tb-btn:hover { background:linear-gradient(160deg,#2e1840,#1e0f2e); border-color:#7a30b0; color:#fff; }
+        .ne-tb-btn.active { background:linear-gradient(160deg,#550090,#3d0060); border-color:#a060e0; color:#fff; }
+        .ne-tb-btn.ne-power-btn { border-color:#6a5000; color:#c09020; }
+        .ne-tb-btn.ne-power-btn:hover { background:linear-gradient(160deg,#201800,#140f00); border-color:#c08800; color:#e0b030; }
+        .ne-tb-btn.ne-in-btn { border-color:#205a30; color:#60c070; }
+        .ne-tb-btn.ne-in-btn:hover { background:linear-gradient(160deg,#102818,#081810); border-color:#40a050; color:#80e090; }
+        .ne-tb-btn.ne-out-btn { border-color:#203060; color:#6080c0; }
+        .ne-tb-btn.ne-out-btn:hover { background:linear-gradient(160deg,#101828,#080f1a); border-color:#4060a0; color:#80a0e0; }
+        .ne-tb-btn.ne-gate-btn { border-color:#1a2a50; color:#7090c8; }
+        .ne-tb-btn.ne-gate-btn:hover { background:linear-gradient(160deg,#101828,#081018); border-color:#3050a0; color:#90b0e0; }
+        #ne-hint { margin-left:auto; font-size:0.72rem; color:#444; }
+        #ne-canvas-wrap { flex:1; position:relative; overflow:hidden; background-color:#060608; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40'%3E%3Cline x1='20' y1='12' x2='20' y2='28' stroke='white' stroke-width='1' stroke-opacity='0.12'/%3E%3Cline x1='12' y1='20' x2='28' y2='20' stroke='white' stroke-width='1' stroke-opacity='0.12'/%3E%3C/svg%3E"); background-size:40px 40px; cursor:default; }
+        #ne-canvas-wrap.ne-connect-mode { cursor:crosshair; }
+        #ne-canvas-wrap.ne-panning { cursor:grabbing !important; }
+        #ne-canvas-world { position:absolute; top:0; left:0; width:0; height:0; transform-origin:0 0; }
+        #ne-wire-svg { position:absolute; left:0; top:0; width:1px; height:1px; overflow:visible; z-index:0; pointer-events:none; }
+        /* Mini canvas nodes share .node styles — these overrides handle context differences */
+        #ne-canvas-world .node { overflow:visible; cursor:move; min-width:120px; }
+        #ne-canvas-world .node:hover { transform:none; }
+        #ne-canvas-world .node:active { cursor:grabbing; }
+        #ne-canvas-world .node.ne-pending-src { outline:2px solid #c080f0; outline-offset:3px; box-shadow:0 0 14px rgba(180,80,255,0.4); }
+        /* IN/OUT boundary node styling */
+        #ne-canvas-world .ne-in-node { background:linear-gradient(150deg,#0c1a0c,#060e06); border-color:#208040 !important; }
+        #ne-canvas-world .ne-out-node { background:linear-gradient(150deg,#0c0e1a,#06080e); border-color:#204888 !important; }
+        /* Ports — float outside node top/bottom edge */
+        .ne-port { position:absolute; width:13px; height:13px; border-radius:50%; background:var(--accent,#5a20a0); border:2px solid #8840c0; cursor:crosshair; z-index:12; left:50%; transform:translateX(-50%); transition:background 0.12s,transform 0.12s; }
+        .ne-port[data-port="in"]  { top:-8px; }
+        .ne-port[data-port="out"] { bottom:-8px; }
+        .ne-port:hover { background:#a050e8; transform:translateX(-50%) scale(1.4); }
+        #ne-canvas-world .gate-node .ne-port { background:#2a4090; border-color:#4060c0; }
+        #ne-canvas-world .gate-node .ne-port:hover { background:#5070d0; transform:translateX(-50%) scale(1.4); }
+        #ne-canvas-world .ne-in-node .ne-port { background:#208040; border-color:#40b060; }
+        #ne-canvas-world .ne-in-node .ne-port:hover { background:#30b060; transform:translateX(-50%) scale(1.4); }
+        #ne-canvas-world .ne-out-node .ne-port { background:#204888; border-color:#4068b0; }
+        #ne-canvas-world .ne-out-node .ne-port:hover { background:#3068b0; transform:translateX(-50%) scale(1.4); }
+        #ne-canvas-world .ne-power-node { background:linear-gradient(150deg,#1a1400,#0e0a00); border-color:#c08800 !important; }
+        #ne-canvas-world .ne-power-node .ne-port { background:#a07000; border-color:#d0a020; }
+        #ne-canvas-world .ne-power-node .ne-port:hover { background:#d0a020; transform:translateX(-50%) scale(1.4); }
+        .power-label { font-size:0.88rem; font-weight:bold; color:#c08800; letter-spacing:1px; }
+        body.light-mode #ne-canvas-world .ne-power-node { background:linear-gradient(150deg,#fdf0b8,#f0e098) !important; border-color:#a07800 !important; }
+        body.light-mode #ne-canvas-world .ne-power-node .ne-port { background:#c09000; border-color:#e0b030; }
+        body.light-mode .power-label { color:#8a6000; }
+        #ne-footer { display:flex; justify-content:flex-end; gap:10px; padding:12px 18px; border-top:1px solid #24143a; flex-shrink:0; }
+        .ne-divider { width:1px; height:20px; background:#3a1a55; flex-shrink:0; margin:0 2px; }
+        /* ── Light mode overrides ── */
+        body.light-mode #node-editor-modal { background:linear-gradient(160deg,#d4ccbf,#ccc4b8); border-color:#a8957e; }
+        body.light-mode #ne-header, body.light-mode #ne-toolbar, body.light-mode #ne-footer { border-color:#b0a090; }
+        body.light-mode #ne-name-input { background:#cec4b8; border-color:#a8957e; color:#261e16; }
+        body.light-mode #ne-name-input:focus { border-color:#8a5028; box-shadow:0 0 0 3px rgba(138,80,40,0.12); }
+        body.light-mode #ne-name-input::placeholder { color:#b0a090; }
+        body.light-mode #ne-color-input { border-color:#a8957e; }
+        body.light-mode #ne-close-btn { border-color:#a8957e; color:#7a6858; }
+        body.light-mode #ne-close-btn:hover { border-color:#cc4444; color:#cc4444; }
+        body.light-mode .ne-divider { background:#b0a090; }
+        body.light-mode .ne-tb-btn { background:linear-gradient(160deg,#ccc4b8,#c4bcb0); border-color:#b0a090; color:#5a4838; }
+        body.light-mode .ne-tb-btn:hover { background:linear-gradient(160deg,#c0b8aa,#b8b0a2); border-color:#8a7060; color:#261e16; }
+        body.light-mode .ne-tb-btn.active { background:linear-gradient(160deg,#3a3028,#2a2018); border-color:#584840; color:#f0e8de; }
+        body.light-mode .ne-tb-btn.ne-power-btn { border-color:#a07830; color:#806010; }
+        body.light-mode .ne-tb-btn.ne-power-btn:hover { background:linear-gradient(160deg,#f0e8c0,#e8deb0); border-color:#907020; color:#604800; }
+        body.light-mode .ne-tb-btn.ne-in-btn { border-color:#507850; color:#406840; }
+        body.light-mode .ne-tb-btn.ne-in-btn:hover { background:linear-gradient(160deg,#c4d0c4,#b8c8b8); border-color:#307830; color:#205820; }
+        body.light-mode .ne-tb-btn.ne-out-btn { border-color:#506080; color:#405070; }
+        body.light-mode .ne-tb-btn.ne-out-btn:hover { background:linear-gradient(160deg,#c4c8d0,#b8bec8); border-color:#305080; color:#204060; }
+        body.light-mode .ne-tb-btn.ne-gate-btn { border-color:#506090; color:#405080; }
+        body.light-mode .ne-tb-btn.ne-gate-btn:hover { background:linear-gradient(160deg,#c4c8d4,#b8beca); border-color:#304080; color:#203060; }
+        body.light-mode #ne-canvas-wrap { background-color:#d0c8ba; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40'%3E%3Cline x1='20' y1='12' x2='20' y2='28' stroke='black' stroke-width='1' stroke-opacity='0.18'/%3E%3Cline x1='12' y1='20' x2='28' y2='20' stroke='black' stroke-width='1' stroke-opacity='0.18'/%3E%3C/svg%3E"); }
+        body.light-mode #ne-hint { color:#9a8878; }
+        body.light-mode #ne-canvas-world .ne-in-node { background:linear-gradient(150deg,#b8d4bc,#acccb0) !important; border-color:#5a9868 !important; }
+        body.light-mode #ne-canvas-world .ne-out-node { background:linear-gradient(150deg,#b8c4d8,#acbacc) !important; border-color:#507898 !important; }
+        body.light-mode #ne-canvas-world .ne-in-node .ne-port { background:#5a9868; border-color:#7ab888; }
+        body.light-mode #ne-canvas-world .ne-out-node .ne-port { background:#507898; border-color:#7098b8; }
+
         #alarm-modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:1000; align-items:center; justify-content:center; }
         #alarm-modal-overlay.visible { display:flex; }
         #alarm-modal { background: linear-gradient(160deg,#111116,#0a0a0e); border:1px solid #4a1a70; border-radius:12px; padding:28px 28px 24px; width:280px; display:flex; flex-direction:column; gap:16px; box-shadow:0 24px 60px rgba(0,0,0,0.85); }
@@ -484,6 +599,8 @@
             box-shadow: 0 16px 40px rgba(0,0,0,0.85), 0 4px 14px rgba(90,32,128,0.2);
         }
         #ctx-menu.visible { display: flex; }
+        #ne-ctx-menu { position:fixed; display:none; flex-direction:column; background:linear-gradient(160deg,#111118,#0c0c12); border:1px solid #4a1a70; border-radius:8px; padding:6px; z-index:1300; min-width:140px; box-shadow:0 16px 40px rgba(0,0,0,0.85),0 4px 14px rgba(90,32,128,0.2); }
+        #ne-ctx-menu.visible { display:flex; }
         .ctx-item {
             padding: 8px 12px; border-radius: 5px;
             font-size: 0.84rem; color: #bbb; cursor: pointer;
@@ -578,6 +695,40 @@
         }
         body.light-mode .toolbar-divider { background: #b0a090; }
 
+        .toolbar-section-label {
+            font-size: 0.7rem; color: #555; padding: 2px 2px 0;
+            letter-spacing: 0.04em; text-transform: uppercase;
+        }
+        body.light-mode .toolbar-section-label { color: #9a8878; }
+
+        #custom-types-list { display: flex; flex-direction: column; gap: 4px; }
+        .custom-type-item {
+            display: flex; align-items: center; gap: 7px;
+            background: linear-gradient(160deg, #1a1a22, #101016);
+            border: 1px solid #3a1a55;
+            border-radius: 6px; padding: 7px 10px;
+            cursor: pointer; font-size: 0.82rem; color: #c8c8c8;
+            transition: all 0.15s;
+            width: 100%;
+        }
+        .custom-type-item:hover {
+            background: linear-gradient(160deg, #2a1840, #1a0f2c);
+            border-color: #7a35b0; color: #fff;
+            transform: translateX(2px);
+        }
+        .custom-type-dot {
+            width: 10px; height: 10px; border-radius: 50%;
+            flex-shrink: 0;
+        }
+        body.light-mode .custom-type-item {
+            background: linear-gradient(160deg, #ccc4b4, #c4bcb0);
+            border-color: #b0a090; color: #3a2e22;
+        }
+        body.light-mode .custom-type-item:hover {
+            background: linear-gradient(160deg, #c0b8a8, #b8b0a4);
+            border-color: #8a7060; color: #1e140c;
+        }
+
         body.light-mode #canvas { background-color: #d2c9be; }
 
         body.light-mode .node {
@@ -658,7 +809,7 @@
         body.light-mode .modal-btn.primary { background: linear-gradient(160deg, #3a3028, #2a2018) !important; border-color: #584840 !important; color: #f0e8de !important; box-shadow: 0 4px 14px rgba(40,25,10,0.25) !important; }
         body.light-mode .modal-btn.primary:hover { background: linear-gradient(160deg, #4a3e32, #3a2e22) !important; box-shadow: 0 6px 18px rgba(40,25,10,0.35) !important; }
 
-        body.light-mode #ctx-menu, body.light-mode #canvas-ctx-menu, body.light-mode #add-menu {
+        body.light-mode #ctx-menu, body.light-mode #canvas-ctx-menu, body.light-mode #add-menu, body.light-mode #ne-ctx-menu {
             background: linear-gradient(160deg, #d8d0c4, #d0c8bc);
             border-color: #a8957e;
             box-shadow: 0 14px 36px rgba(50,30,10,0.14), 0 4px 12px rgba(50,30,10,0.08);
@@ -813,6 +964,10 @@
     <button class="toolbar-btn" onclick="addClockNode()">⏱ Timer</button>
     <button class="toolbar-btn" onclick="addAlarmNode()">⏱ Alarm</button>
     <div class="toolbar-divider"></div>
+    <div class="toolbar-section-label">Custom Nodes</div>
+    <button class="toolbar-btn" onclick="openNodeTypeEditor()">+ Create Node</button>
+    <div id="custom-types-list"></div>
+    <div class="toolbar-divider"></div>
     <button class="toolbar-btn" id="connect-btn" onclick="toggleConnectMode()">&#x1F517; Connect</button>
     <label class="connect-sticky-wrap" title="Keep connect mode on after each connection">
         <input type="checkbox" id="connect-sticky-toggle" onchange="connectSticky = this.checked">
@@ -829,7 +984,7 @@
     <div id="canvas-world">
         <svg id="wire-svg"></svg>
     </div>
-    <canvas id="slash-canvas"></canvas>
+    <svg id="slash-svg"></svg>
     <div id="hint">Click "Connect" then click two nodes to wire them · Click a wire to select · Delete removes selection</div>
 </div>
 <div id="save-toast"></div>
@@ -943,6 +1098,10 @@
     <div class="ctx-item danger" onclick="ctxDelete()">✕ Delete</div>
 </div>
 
+<div id="ne-ctx-menu">
+    <div class="ctx-item danger" onclick="neCtxDelete()">✕ Delete</div>
+</div>
+
 <div id="add-menu-overlay" onclick="closeAddMenu()"></div>
 <div id="add-menu">
     <div class="add-menu-header">
@@ -968,6 +1127,41 @@
         <div id="modal-buttons">
             <button class="modal-btn" onclick="modalCancel()">Cancel</button>
             <button class="modal-btn primary" id="modal-confirm-btn" onclick="modalConfirm()">Create</button>
+        </div>
+    </div>
+</div>
+
+<div id="node-editor-overlay">
+    <div id="node-editor-modal">
+        <div id="ne-header">
+            <input id="ne-name-input" placeholder="Node type name…" maxlength="40">
+            <input type="color" id="ne-color-input" value="#7a30b0" title="Node color">
+            <button id="ne-close-btn" onclick="closeNodeEditor()">✕</button>
+        </div>
+        <div id="ne-toolbar">
+            <button class="ne-tb-btn" onclick="neAddTaskNode()">+ Task</button>
+            <button class="ne-tb-btn" onclick="neAddChecklistNode()">+ Checklist</button>
+            <button class="ne-tb-btn" onclick="neAddNoteNode()">Note</button>
+            <div class="ne-divider"></div>
+            <button class="ne-tb-btn ne-gate-btn" onclick="neAddGateNode('AND')">AND</button>
+            <button class="ne-tb-btn ne-gate-btn" onclick="neAddGateNode('OR')">OR</button>
+            <button class="ne-tb-btn ne-gate-btn" onclick="neAddGateNode('XOR')">XOR</button>
+            <div class="ne-divider"></div>
+            <button class="ne-tb-btn ne-power-btn" onclick="neAddPowerNode()">⚡ Power</button>
+            <button class="ne-tb-btn ne-in-btn" onclick="neAddInNode()">+ IN</button>
+            <button class="ne-tb-btn ne-out-btn" onclick="neAddOutNode()">+ OUT</button>
+            <div class="ne-divider"></div>
+            <button class="ne-tb-btn" id="ne-connect-btn" onclick="neToggleConnect()">&#x1F517; Connect</button>
+            <span id="ne-hint">IN / OUT = boundary ports &nbsp;·&nbsp; Connect: click output port → input port &nbsp;·&nbsp; Click a wire to delete it &nbsp;·&nbsp; Drag to move</span>
+        </div>
+        <div id="ne-canvas-wrap">
+            <div id="ne-canvas-world">
+                <svg id="ne-wire-svg"></svg>
+            </div>
+        </div>
+        <div id="ne-footer">
+            <button class="modal-btn" onclick="closeNodeEditor()">Cancel</button>
+            <button class="modal-btn primary" onclick="saveNodeType()">Save Node Type</button>
         </div>
     </div>
 </div>
@@ -1228,6 +1422,7 @@
     }
     let connectMode = false;
     let connectSource = null;
+    let connectSourcePort = null;
     let connectSticky = false;
     let connectionHistory = [];
 
@@ -1300,6 +1495,7 @@
         canvas.classList.toggle("connect-mode", connectMode);
         if (!connectMode) {
             if (connectSource) { connectSource.classList.remove("connect-source"); connectSource = null; }
+            connectSourcePort = null;
             connectSticky = false;
             document.getElementById("connect-sticky-toggle").checked = false;
         }
@@ -1335,26 +1531,60 @@
     }
 
     // --- Copy / Paste ---
-    let copiedNodeData = null;
+    let clipboard = null; // { nodes: [...], conns: [...] }
 
     function copySelected() {
-        if (!selectedNode) return;
-        copiedNodeData = serializeNode(selectedNode);
-        showToast("Copied", "#a060e0");
+        const nodes = selectedNodes.length > 0 ? selectedNodes
+                    : selectedNode ? [selectedNode] : [];
+        if (nodes.length === 0) return;
+        const nodeIds = new Set(nodes.map(n => n.id));
+        clipboard = {
+            nodes: nodes.map(n => serializeNode(n)),
+            conns: connections.filter(c => nodeIds.has(c.sourceId) && nodeIds.has(c.targetId))
+                              .map(c => ({ ...c }))
+        };
+        showToast(`Copied ${nodes.length} node${nodes.length > 1 ? "s" : ""}`, "#a060e0");
     }
 
     function pasteNode(canvasX, canvasY) {
-        if (!copiedNodeData) return;
-        nodeCounter++;
-        const nd = {
-            ...copiedNodeData,
-            id: "node-" + nodeCounter,
-            x: canvasX !== undefined ? snap(canvasX - 75) : (copiedNodeData.x || 100) + GRID,
-            y: canvasY !== undefined ? snap(canvasY - 20) : (copiedNodeData.y || 100) + GRID,
-            completed: false
-        };
-        const node = reconstructNode(nd);
-        selectNode(node);
+        if (!clipboard) return;
+        pushUndoSnapshot();
+
+        // Centre of the copied group in world coords
+        const xs = clipboard.nodes.map(n => n.x);
+        const ys = clipboard.nodes.map(n => n.y);
+        const cx = (Math.min(...xs) + Math.max(...xs)) / 2;
+        const cy = (Math.min(...ys) + Math.max(...ys)) / 2;
+        const offsetX = canvasX !== undefined ? canvasX - cx : GRID;
+        const offsetY = canvasY !== undefined ? canvasY - cy : GRID;
+
+        // Remap old node IDs → new IDs
+        const idMap = {};
+        const newNodes = [];
+        clipboard.nodes.forEach(nd => {
+            nodeCounter++;
+            const newId = "node-" + nodeCounter;
+            idMap[nd.id] = newId;
+            const node = reconstructNode({
+                ...nd,
+                id: newId,
+                x: snap(nd.x + offsetX),
+                y: snap(nd.y + offsetY),
+                completed: false
+            });
+            newNodes.push(node);
+        });
+
+        // Recreate internal connections with new IDs
+        clipboard.conns.forEach(c => {
+            if (!idMap[c.sourceId] || !idMap[c.targetId]) return;
+            connCounter++;
+            connections.push({ id: "conn-" + connCounter, sourceId: idMap[c.sourceId], targetId: idMap[c.targetId], color: c.color });
+        });
+
+        renderWires();
+        deselectAll();
+        newNodes.forEach(n => { n.classList.add("multi-selected"); selectedNodes.push(n); });
         evaluateAll();
     }
 
@@ -1377,8 +1607,15 @@
 
     function ctxCopy() {
         if (!ctxTargetNode) return;
-        copiedNodeData = serializeNode(ctxTargetNode);
-        showToast("Copied", "#a060e0");
+        const nodes = selectedNodes.includes(ctxTargetNode) && selectedNodes.length > 1
+            ? selectedNodes : [ctxTargetNode];
+        const nodeIds = new Set(nodes.map(n => n.id));
+        clipboard = {
+            nodes: nodes.map(n => serializeNode(n)),
+            conns: connections.filter(c => nodeIds.has(c.sourceId) && nodeIds.has(c.targetId))
+                              .map(c => ({ ...c }))
+        };
+        showToast(`Copied ${nodes.length} node${nodes.length > 1 ? "s" : ""}`, "#a060e0");
         closeCtxMenu();
     }
 
@@ -1433,8 +1670,8 @@
         _canvasPasteX = x; _canvasPasteY = y;
         const menu = document.getElementById("canvas-ctx-menu");
         const pasteItem = document.getElementById("canvas-ctx-paste");
-        pasteItem.style.opacity = copiedNodeData ? "1" : "0.35";
-        pasteItem.style.pointerEvents = copiedNodeData ? "auto" : "none";
+        pasteItem.style.opacity = clipboard ? "1" : "0.35";
+        pasteItem.style.pointerEvents = clipboard ? "auto" : "none";
         menu.classList.add("visible");
         const w = 168, h = 90;
         menu.style.left = Math.min(x, window.innerWidth  - w - 8) + "px";
@@ -1447,7 +1684,7 @@
 
     function ctxPaste() {
         closeCanvasCtxMenu();
-        if (!copiedNodeData) return;
+        if (!clipboard) return;
         const w = screenToWorld(_canvasPasteX, _canvasPasteY);
         pasteNode(w.x, w.y);
     }
@@ -1502,62 +1739,60 @@
     });
 
     // --- Slash-to-delete ---
-    const slashCanvas = document.getElementById("slash-canvas");
-    const slashCtx = slashCanvas.getContext("2d");
-    let _slashing = false, _slashStartX = 0, _slashStartY = 0, _slashCurX = 0, _slashCurY = 0;
+    const slashSvgEl = document.getElementById("slash-svg");
+    let _slashState = null;
 
-    function resizeSlashCanvas() {
-        const el = document.getElementById("canvas");
-        slashCanvas.width = el.offsetWidth;
-        slashCanvas.height = el.offsetHeight;
+    function _clearSlash() {
+        while (slashSvgEl.firstChild) slashSvgEl.removeChild(slashSvgEl.firstChild);
+        _slashState = null;
     }
-    window.addEventListener("resize", resizeSlashCanvas);
-    resizeSlashCanvas();
 
-    document.getElementById("canvas").addEventListener("mousedown", (e) => {
-        if (e.button !== 2 || e.target.closest(".node")) return;
-        _slashStartX = e.clientX;
-        _slashStartY = e.clientY;
-        _slashCurX = e.clientX;
-        _slashCurY = e.clientY;
+    window.addEventListener("mousedown", (e) => {
+        if (e.button !== 2) return;
+        _clearSlash();
+        if (!e.target.closest("#canvas") || e.target.closest(".node")) return;
+        _slashState = { startX: e.clientX, startY: e.clientY, active: false, line: null };
     });
 
-    document.addEventListener("mousemove", (e) => {
-        if (e.buttons !== 2) return;
-        const dx = e.clientX - _slashStartX, dy = e.clientY - _slashStartY;
-        if (!_slashing && Math.sqrt(dx*dx + dy*dy) > 8) {
-            _slashing = true;
+    window.addEventListener("mousemove", (e) => {
+        if (!_slashState || !(e.buttons & 2)) return;
+        const dx = e.clientX - _slashState.startX, dy = e.clientY - _slashState.startY;
+        if (!_slashState.active && dx * dx + dy * dy > 64) {
+            _slashState.active = true;
             clearTimeout(_holdTimer);
             _holdFired = true;
         }
-        if (!_slashing) return;
-        _slashCurX = e.clientX;
-        _slashCurY = e.clientY;
+        if (!_slashState.active) return;
         const r = document.getElementById("canvas").getBoundingClientRect();
-        slashCtx.clearRect(0, 0, slashCanvas.width, slashCanvas.height);
-        slashCtx.beginPath();
-        slashCtx.moveTo(_slashStartX - r.left, _slashStartY - r.top);
-        slashCtx.lineTo(_slashCurX - r.left, _slashCurY - r.top);
-        slashCtx.strokeStyle = "rgba(220,70,70,0.9)";
-        slashCtx.lineWidth = 2;
-        slashCtx.setLineDash([10, 5]);
-        slashCtx.stroke();
-        slashCtx.setLineDash([]);
+        if (!_slashState.line) {
+            const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+            line.setAttribute("stroke", "rgba(220,70,70,0.9)");
+            line.setAttribute("stroke-width", "2");
+            line.setAttribute("stroke-dasharray", "10 5");
+            line.setAttribute("stroke-linecap", "round");
+            slashSvgEl.appendChild(line);
+            _slashState.line = line;
+        }
+        _slashState.line.setAttribute("x1", _slashState.startX - r.left);
+        _slashState.line.setAttribute("y1", _slashState.startY - r.top);
+        _slashState.line.setAttribute("x2", e.clientX - r.left);
+        _slashState.line.setAttribute("y2", e.clientY - r.top);
     });
 
-    document.addEventListener("mouseup", (e) => {
+    window.addEventListener("mouseup", (e) => {
         if (e.button !== 2) return;
-        const wasSlashing = _slashing;
-        _slashing = false;
-        slashCtx.clearRect(0, 0, slashCanvas.width, slashCanvas.height);
-        if (!wasSlashing) return;
+        const state = _slashState;
+        const endX = e.clientX, endY = e.clientY;
+        _clearSlash();
 
-        const p1 = screenToWorld(_slashStartX, _slashStartY);
-        const p2 = screenToWorld(_slashCurX, _slashCurY);
+        if (!state || !state.active) return;
+
+        const p1 = screenToWorld(state.startX, state.startY);
+        const p2 = screenToWorld(endX, endY);
 
         const toDelete = connections.filter(c => {
-            const src = getNodeCenter(c.sourceId, "right");
-            const tgt = getNodeCenter(c.targetId, "left");
+            const src = (c.sourcePort != null) ? getPortCenter(c.sourceId, "out", c.sourcePort) : getNodeCenter(c.sourceId, "right");
+            const tgt = (c.targetPort != null) ? getPortCenter(c.targetId, "in",  c.targetPort) : getNodeCenter(c.targetId, "left");
             if (!src || !tgt) return false;
             const cdx = Math.max(60, Math.abs(tgt.x - src.x) * 0.5);
             return bezierCutsLine(
@@ -1898,22 +2133,61 @@
     function handleConnectClick(node) {
         if (!connectSource) {
             connectSource = node;
+            connectSourcePort = null;
             node.classList.add("connect-source");
         } else if (connectSource === node) {
             connectSource.classList.remove("connect-source");
             connectSource = null;
+            connectSourcePort = null;
         } else {
             connCounter++;
             pushUndoSnapshot();
             const newConn = { id: "conn-" + connCounter, sourceId: connectSource.id, targetId: node.id, color: currentAccent };
+            if (connectSourcePort !== null) newConn.sourcePort = connectSourcePort;
             connections.push(newConn);
             connectionHistory.push(newConn.id);
             connectSource.classList.remove("connect-source");
             connectSource = null;
+            connectSourcePort = null;
             if (!connectSticky) toggleConnectMode();
             renderWires();
             evaluateAll();
         }
+    }
+
+    function handlePortConnectClick(node, portType, portIndex) {
+        if (!connectSource) {
+            if (portType !== "out") return;
+            connectSource = node;
+            connectSourcePort = portIndex;
+            node.classList.add("connect-source");
+            return;
+        }
+        if (connectSource === node) {
+            connectSource.classList.remove("connect-source");
+            connectSource = null;
+            connectSourcePort = null;
+            return;
+        }
+        if (portType === "out") {
+            connectSource.classList.remove("connect-source");
+            connectSource = node;
+            connectSourcePort = portIndex;
+            node.classList.add("connect-source");
+            return;
+        }
+        connCounter++;
+        pushUndoSnapshot();
+        const newConn = { id: "conn-" + connCounter, sourceId: connectSource.id, targetId: node.id, color: currentAccent, targetPort: portIndex };
+        if (connectSourcePort !== null) newConn.sourcePort = connectSourcePort;
+        connections.push(newConn);
+        connectionHistory.push(newConn.id);
+        connectSource.classList.remove("connect-source");
+        connectSource = null;
+        connectSourcePort = null;
+        if (!connectSticky) toggleConnectMode();
+        renderWires();
+        evaluateAll();
     }
 
     // --- Inline editing ---
@@ -2435,24 +2709,37 @@
         return { x: x, y: y + h / 2 };
     }
 
+    function getPortCenter(nodeId, portType, portIndex) {
+        const node = document.getElementById(nodeId);
+        if (!node) return null;
+        const ports = node.querySelectorAll(`.ct-port-${portType}`);
+        if (!ports.length || portIndex >= ports.length) {
+            return getNodeCenter(nodeId, portType === "in" ? "left" : "right");
+        }
+        const portEl = ports[portIndex];
+        const rect = portEl.getBoundingClientRect();
+        const cx = (rect.left + rect.right) / 2;
+        const cy = (rect.top + rect.bottom) / 2;
+        return screenToWorld(cx, cy);
+    }
+
     function renderWires() {
         const svg = document.getElementById("wire-svg");
         svg.innerHTML = `<defs>
             ${connections.map(c => `
             <marker id="arrow-${c.id}" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
-                <polygon points="0 0, 6 3, 0 6" fill="${selectedConnId === c.id ? '#ffffff' : c.color}"/>
+                <polygon points="0 0, 6 3, 0 6" fill="${c.color}"/>
             </marker>`).join("")}
         </defs>`;
 
         connections.forEach(c => {
-            const src = getNodeCenter(c.sourceId, "right");
-            const tgt = getNodeCenter(c.targetId, "left");
+            const src = (c.sourcePort != null) ? getPortCenter(c.sourceId, "out", c.sourcePort) : getNodeCenter(c.sourceId, "right");
+            const tgt = (c.targetPort != null) ? getPortCenter(c.targetId, "in",  c.targetPort) : getNodeCenter(c.targetId, "left");
             if (!src || !tgt) return;
 
             const dx = Math.max(60, Math.abs(tgt.x - src.x) * 0.5);
             const d = `M ${src.x} ${src.y} C ${src.x + dx} ${src.y} ${tgt.x - dx} ${tgt.y} ${tgt.x} ${tgt.y}`;
-            const color = selectedConnId === c.id ? "#ffffff" : c.color;
-            const width = selectedConnId === c.id ? 3 : 2;
+            const selected = selectedConnId === c.id;
 
             // Wide invisible hit target
             const hit = document.createElementNS("http://www.w3.org/2000/svg", "path");
@@ -2464,11 +2751,23 @@
             hit.style.cursor = "pointer";
             hit.addEventListener("click", (e) => { e.stopPropagation(); selectWire(c.id); });
 
-            // Visible wire
+            // Selection outline (drawn behind the wire)
+            if (selected) {
+                const outline = document.createElementNS("http://www.w3.org/2000/svg", "path");
+                outline.setAttribute("d", d);
+                outline.setAttribute("stroke", "rgba(255,255,255,0.85)");
+                outline.setAttribute("stroke-width", "6");
+                outline.setAttribute("fill", "none");
+                outline.setAttribute("stroke-linecap", "round");
+                outline.style.pointerEvents = "none";
+                svg.appendChild(outline);
+            }
+
+            // Visible wire (always original color)
             const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
             path.setAttribute("d", d);
-            path.setAttribute("stroke", color);
-            path.setAttribute("stroke-width", width);
+            path.setAttribute("stroke", c.color);
+            path.setAttribute("stroke-width", selected ? 2.5 : 2);
             path.setAttribute("fill", "none");
             path.setAttribute("stroke-linecap", "round");
             path.setAttribute("marker-end", `url(#arrow-${c.id})`);
@@ -2520,30 +2819,92 @@
         return n ? n.classList.contains("completed") : false;
     }
 
+    // Simulate the internal node graph of a custom type, given external input signals.
+    // portMap: { portIndex: [sourceNodeIds] }  — the external wires feeding each input port
+    // Returns an array of booleans, one per OUT node (sorted by Y).
+    function evalInternalGraph(nodeType, portMap) {
+        const internalNodes = nodeType.nodes || [];
+        const internalConns = nodeType.connections || [];
+
+        const inNodes  = internalNodes.filter(n => n.type === "in").sort((a, b) => a.y - b.y);
+        const outNodes = internalNodes.filter(n => n.type === "out").sort((a, b) => a.y - b.y);
+
+        // Seed signals
+        const sig = {};
+        internalNodes.forEach(n => { sig[n.id] = false; });
+        inNodes.forEach((n, i) => {
+            const extSrcs = portMap[i] || [];
+            sig[n.id] = extSrcs.some(sid => getOutput(sid));
+        });
+        internalNodes.filter(n => n.type === "power").forEach(n => { sig[n.id] = true; });
+
+        // Build per-node incoming list
+        const inc = {};
+        internalConns.forEach(c => {
+            if (!inc[c.toId]) inc[c.toId] = [];
+            inc[c.toId].push(c.fromId);
+        });
+
+        // Propagate — run enough passes to traverse any chain length
+        const passes = internalNodes.length + 2;
+        for (let p = 0; p < passes; p++) {
+            internalNodes.forEach(n => {
+                const srcs = inc[n.id];
+                if (!srcs || !srcs.length) return;
+                const srcSigs = srcs.map(id => sig[id]);
+                if (n.type === "gate") {
+                    if (n.gateType === "AND")      sig[n.id] = srcSigs.every(Boolean);
+                    else if (n.gateType === "OR")  sig[n.id] = srcSigs.some(Boolean);
+                    else if (n.gateType === "XOR") sig[n.id] = srcSigs.filter(Boolean).length === 1;
+                } else {
+                    sig[n.id] = srcSigs.every(Boolean);
+                }
+            });
+        }
+
+        return outNodes.map(n => sig[n.id]);
+    }
+
     function evaluateAll() {
         for (let i = 0; i < 8; i++) evaluatePass();
     }
 
     function evaluatePass() {
         const incoming = {};
+        const portIncoming = {};   // { targetId: { portIndex: [sourceIds] } }
         connections.forEach(c => {
             if (!incoming[c.targetId]) incoming[c.targetId] = [];
             incoming[c.targetId].push(c.sourceId);
+            if (c.targetPort != null) {
+                if (!portIncoming[c.targetId]) portIncoming[c.targetId] = {};
+                if (!portIncoming[c.targetId][c.targetPort]) portIncoming[c.targetId][c.targetPort] = [];
+                portIncoming[c.targetId][c.targetPort].push(c.sourceId);
+            }
         });
 
-        document.querySelectorAll(".node").forEach(node => {
+        document.querySelectorAll("#canvas-world .node").forEach(node => {
             const sources = incoming[node.id];
+
+            // Resolve custom type node's internal graph metadata up front
+            const ctTypeId   = node.classList.contains("custom-type-node") ? parseInt(node.dataset.nodeTypeId) : null;
+            const ctNodeType = ctTypeId ? nodeTypes.find(t => t.id === ctTypeId) : null;
+            const ctHasGraph = ctNodeType && (ctNodeType.nodes || []).some(n => n.type === "out");
+
             if (!sources || sources.length === 0) {
-                // No inputs: free tasks/end nodes, but gates stay off
-                if (!node.dataset.gateType && !node.classList.contains("start-node")) {
-                    node.classList.remove("locked");
-                    const status = node.querySelector(".node-status");
-                    if (status && status.textContent === "Locked") status.textContent = "Unlocked";
+                if (ctHasGraph) {
+                    // Has internal logic — must evaluate even with no external wires
+                } else {
+                    // No inputs: free tasks/end nodes stay unlocked; gates stay off
+                    if (!node.dataset.gateType && !node.classList.contains("start-node")) {
+                        node.classList.remove("locked");
+                        const status = node.querySelector(".node-status");
+                        if (status && status.textContent === "Locked") status.textContent = "Unlocked";
+                    }
+                    return;
                 }
-                return;
             }
 
-            const signals = sources.map(sid => getOutput(sid));
+            const signals = (sources || []).map(sid => getOutput(sid));
             const gateType = node.dataset.gateType;
             const status = node.querySelector(".node-status");
 
@@ -2560,6 +2921,30 @@
                 const allOn = signals.every(Boolean);
                 node.classList.toggle("completed", allOn);
                 if (status) status.textContent = allOn ? "Done!" : "Waiting";
+
+            } else if (node.classList.contains("custom-type-node")) {
+                const portMap = portIncoming[node.id] || {};
+
+                if (ctHasGraph) {
+                    const outputSigs = evalInternalGraph(ctNodeType, portMap);
+                    const result = outputSigs.some(Boolean);
+                    node.classList.toggle("completed", result);
+                    node.classList.toggle("locked", !result);
+                    if (status) status.textContent = result ? "Active" : "Inactive";
+                } else {
+                    const numPorts = node.querySelectorAll(".ct-port-in").length;
+                    const satisfied = numPorts > 0 && Object.keys(portMap).length > 0
+                        ? Object.values(portMap).every(sids => sids.some(sid => getOutput(sid)))
+                        : signals.every(Boolean);
+                    if (!satisfied) {
+                        node.classList.add("locked");
+                        node.classList.remove("completed");
+                        if (status) status.textContent = "Locked";
+                    } else {
+                        node.classList.remove("locked");
+                        if (status && status.textContent === "Locked") status.textContent = "Unlocked";
+                    }
+                }
 
             } else {
                 const allOn = signals.every(Boolean);
@@ -2707,6 +3092,7 @@ function resetAll() {
             : node.classList.contains("clock-node") ? "clock"
             : node.classList.contains("alarm-node") ? "alarm"
             : node.classList.contains("note-node") ? "note"
+            : node.classList.contains("custom-type-node") ? "custom-type"
             : node.querySelector(".checklist") ? "checklist"
             : "task";
         const nd = {
@@ -2721,13 +3107,14 @@ function resetAll() {
             html: clone.innerHTML
         };
         if (node.dataset.gateType) nd.gateType = node.dataset.gateType;
+        if (node.dataset.nodeTypeId) nd.nodeTypeId = node.dataset.nodeTypeId;
         if (type === "clock" && clocks[node.id]) nd.clockData = { total: clocks[node.id].total };
         if (type === "alarm" && alarms[node.id]) nd.alarmData = { targetTime: alarms[node.id].targetTime, triggered: alarms[node.id].triggered, loop: alarms[node.id].loop, ringDuration: alarms[node.id].ringDuration };
         return nd;
     }
 
     function gatherNodes() {
-        return Array.from(document.querySelectorAll(".node")).map(serializeNode);
+        return Array.from(document.querySelectorAll("#canvas-world .node")).map(serializeNode);
     }
 
     function reconstructNode(nd) {
@@ -2766,6 +3153,11 @@ function resetAll() {
                 alarms[node.id] = { targetTime: nd.alarmData.targetTime, interval: null, resetTimeout: null, triggered: nd.alarmData.triggered, loop: nd.alarmData.loop || false, ringDuration: nd.alarmData.ringDuration || 5 };
                 if (!nd.alarmData.triggered || nd.alarmData.loop) startAlarm(node.id, node);
             }
+        } else if (nd.type === "custom-type") {
+            if (nd.nodeTypeId) node.dataset.nodeTypeId = String(nd.nodeTypeId);
+            const ct = node.querySelector(".ct-type-name");
+            if (ct) ct.addEventListener("dblclick", e => { e.stopPropagation(); makeEditable(e.target); });
+            attachCtPortHandlers(node);
         }
 
         attachNode(node);
@@ -2800,7 +3192,7 @@ function resetAll() {
     }
 
     function loadCanvasData(data) {
-        document.querySelectorAll(".node").forEach(n => n.remove());
+        document.querySelectorAll("#canvas-world .node").forEach(n => n.remove());
         connections = []; connCounter = 0; nodeCounter = 0;
         Object.keys(clocks).forEach(k => { clearInterval(clocks[k].interval); delete clocks[k]; });
         Object.keys(alarms).forEach(k => { clearInterval(alarms[k].interval); clearTimeout(alarms[k].resetTimeout); delete alarms[k]; });
@@ -2849,6 +3241,544 @@ function resetAll() {
             showToast(silent ? "Auto-saved" : "Saved!");
         });
     }
+
+    // --- Custom node types ---
+    let nodeTypes = [];
+
+    function loadNodeTypes() {
+        fetch("/node_types").then(r => r.json()).then(types => {
+            nodeTypes = types;
+            renderNodeTypeList();
+        });
+    }
+
+    function renderNodeTypeList() {
+        const list = document.getElementById("custom-types-list");
+        list.innerHTML = "";
+        nodeTypes.forEach(t => {
+            const row = document.createElement("div");
+            row.style.cssText = "display:flex;gap:3px;align-items:center;";
+
+            const btn = document.createElement("button");
+            btn.className = "custom-type-item";
+            btn.style.flex = "1";
+            btn.title = t.name;
+            btn.innerHTML = `<span class="custom-type-dot" style="background:${t.color}"></span><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${t.name}</span>`;
+            btn.onclick = () => spawnCustomTypeNode(t);
+
+            const editBtn = document.createElement("button");
+            editBtn.className = "custom-type-item";
+            editBtn.style.cssText = "flex-shrink:0;padding:7px 8px;font-size:0.75rem;";
+            editBtn.title = "Edit node type";
+            editBtn.textContent = "✎";
+            editBtn.onclick = () => openNodeTypeEditor(t.id);
+
+            row.appendChild(btn);
+            row.appendChild(editBtn);
+            list.appendChild(row);
+        });
+    }
+
+    function buildCtPortsHtml(t) {
+        const inNodes  = (t.nodes || []).filter(n => n.type === "in").sort((a, b) => a.y - b.y);
+        const outNodes = (t.nodes || []).filter(n => n.type === "out").sort((a, b) => a.y - b.y);
+        if (!inNodes.length && !outNodes.length) return `<div class="ct-io-row">${t.inputs} in · ${t.outputs} out</div>`;
+        const inHtml  = inNodes.map((n, i) => `<div class="ct-port-row"><div class="ct-port ct-port-in" data-port-type="in" data-port-index="${i}"></div><span class="ct-port-label" title="${n.label || "IN"}">${n.label || "IN"}</span></div>`).join("");
+        const outHtml = outNodes.map((n, i) => `<div class="ct-port-row ct-port-row-out"><span class="ct-port-label" title="${n.label || "OUT"}">${n.label || "OUT"}</span><div class="ct-port ct-port-out" data-port-type="out" data-port-index="${i}"></div></div>`).join("");
+        return `<div class="ct-ports"><div class="ct-in-col">${inHtml}</div><div class="ct-out-col">${outHtml}</div></div>`;
+    }
+
+    function attachCtPortHandlers(node) {
+        node.querySelectorAll(".ct-port").forEach(portEl => {
+            portEl.addEventListener("mousedown", e => e.stopPropagation());
+            portEl.addEventListener("click", e => {
+                e.stopPropagation();
+                const portType  = portEl.dataset.portType;
+                const portIndex = parseInt(portEl.dataset.portIndex);
+                if (portType === "out") {
+                    // Clicking an output port always starts (or redirects) a connection
+                    if (connectSource) connectSource.classList.remove("connect-source");
+                    connectSource = node;
+                    connectSourcePort = portIndex;
+                    node.classList.add("connect-source");
+                    if (!connectMode) toggleConnectMode();
+                } else if (connectSource && connectSource !== node) {
+                    // Clicking an input port while a source is pending completes the connection
+                    handlePortConnectClick(node, portType, portIndex);
+                }
+            });
+        });
+    }
+
+    function spawnCustomTypeNode(t) {
+        pushUndoSnapshot();
+        nodeCounter++;
+        const id = "node-" + nodeCounter;
+        const node = document.createElement("div");
+        node.classList.add("node", "custom-type-node");
+        node.id = id;
+        node.style.left = snap(80 + (nodeCounter * 45) % 520) + "px";
+        node.style.top  = snap(80 + (nodeCounter * 35) % 320) + "px";
+        node.style.borderColor = t.color;
+        node.dataset.nodeTypeId = String(t.id);
+
+        const hex = t.color.replace("#","");
+        const r = parseInt(hex.slice(0,2),16), g = parseInt(hex.slice(2,4),16), b = parseInt(hex.slice(4,6),16);
+        node.innerHTML = `
+            <div class="ct-header" style="background:rgba(${r},${g},${b},0.18)">
+                <span class="ct-badge" style="background:${t.color}"></span>
+                <span class="ct-type-name">${t.name}</span>
+            </div>
+            ${buildCtPortsHtml(t)}
+            <div class="node-status">Waiting</div>`;
+
+        node.querySelector(".ct-type-name").addEventListener("dblclick", e => { e.stopPropagation(); makeEditable(e.target); });
+        attachCtPortHandlers(node);
+        attachNode(node);
+        evaluateAll();
+    }
+
+    // ── Node Editor ──────────────────────────────────────────────────────────
+    let neSelectedNode = null;
+    let neSelectedConnId = null;
+    let _neCtxTarget = null;
+    let _editingTypeId = null;
+    let neNodes = [];           // { id, el, type }
+    let neConnections = [];     // { id, fromId, toId }
+    let neNodeCounter = 0;
+    let neConnCounter = 0;
+    let neConnMode = false;
+    let nePendingSource = null;
+    let nePanX = 0, nePanY = 0, neZoom = 1;
+    let _nePanning = false;
+    let _nePanStart = {};
+    let _neDragging = null;     // { el, startX, startY, origX, origY }
+
+    function neApplyViewTransform() {
+        const world = document.getElementById("ne-canvas-world");
+        world.style.transform = `translate(${nePanX}px,${nePanY}px) scale(${neZoom})`;
+        const wrap = document.getElementById("ne-canvas-wrap");
+        const gs = 40 * neZoom;
+        wrap.style.backgroundSize = `${gs}px ${gs}px`;
+        wrap.style.backgroundPosition = `${nePanX % gs}px ${nePanY % gs}px`;
+    }
+
+    function neScreenToWorld(clientX, clientY) {
+        const r = document.getElementById("ne-canvas-wrap").getBoundingClientRect();
+        return { x: (clientX - r.left - nePanX) / neZoom, y: (clientY - r.top - nePanY) / neZoom };
+    }
+
+    function openNodeTypeEditor(typeId) {
+        typeId = typeId !== undefined ? typeId : null;
+        _editingTypeId = typeId;
+        neNodes = []; neConnections = [];
+        neNodeCounter = 0; neConnCounter = 0;
+        neConnMode = false; nePendingSource = null;
+        nePanX = 0; nePanY = 0; neZoom = 1; _nePanning = false; _neDragging = null;
+        neSelectedNode = null; neSelectedConnId = null; _neCtxTarget = null;
+
+        const world = document.getElementById("ne-canvas-world");
+        Array.from(world.querySelectorAll(".ne-node")).forEach(n => n.remove());
+        document.getElementById("ne-wire-svg").innerHTML = "";
+        neApplyViewTransform();
+        document.getElementById("ne-name-input").value = "";
+        document.getElementById("ne-color-input").value = "#7a30b0";
+        document.getElementById("ne-connect-btn").classList.remove("active");
+        document.getElementById("ne-canvas-wrap").classList.remove("ne-connect-mode", "ne-panning");
+
+        if (typeId !== null) {
+            const t = nodeTypes.find(x => x.id === typeId);
+            if (t) {
+                document.getElementById("ne-name-input").value = t.name;
+                document.getElementById("ne-color-input").value = t.color;
+                const idMap = {};
+                (t.nodes || []).forEach(nd => {
+                    neNodeCounter++;
+                    const id = "ne-" + neNodeCounter;
+                    idMap[nd.id] = id;
+                    const el = neSpawnNode(nd.type, nd.x, nd.y, id, nd.label || nd.gateType || nd.type);
+                    if (nd.gateType && el) el.dataset.gateType = nd.gateType;
+                });
+                (t.connections || []).forEach(c => {
+                    if (!idMap[c.fromId] || !idMap[c.toId]) return;
+                    neConnCounter++;
+                    neConnections.push({ id: "nec-" + neConnCounter, fromId: idMap[c.fromId], toId: idMap[c.toId] });
+                });
+                neRenderWires();
+            }
+        }
+        document.getElementById("node-editor-overlay").classList.add("visible");
+    }
+
+    function closeNodeEditor() {
+        document.getElementById("node-editor-overlay").classList.remove("visible");
+        _editingTypeId = null;
+        neDeselectAll(); neCloseCtxMenu();
+    }
+
+    function neSelectNode(el) {
+        neDeselectAll();
+        neSelectedNode = el;
+        el.classList.add("selected");
+    }
+
+    function neDeselectAll() {
+        if (neSelectedNode) { neSelectedNode.classList.remove("selected"); neSelectedNode = null; }
+        if (neSelectedConnId) { neSelectedConnId = null; neRenderWires(); }
+    }
+
+    function neOpenCtxMenu(node, x, y) {
+        _neCtxTarget = node;
+        const menu = document.getElementById("ne-ctx-menu");
+        menu.classList.add("visible");
+        menu.style.left = Math.min(x, window.innerWidth  - 148) + "px";
+        menu.style.top  = Math.min(y, window.innerHeight -  60) + "px";
+    }
+
+    function neCloseCtxMenu() {
+        document.getElementById("ne-ctx-menu").classList.remove("visible");
+        _neCtxTarget = null;
+    }
+
+    function neCtxDelete() {
+        if (!_neCtxTarget) return;
+        const id = _neCtxTarget.dataset.id;
+        neConnections = neConnections.filter(c => c.fromId !== id && c.toId !== id);
+        neNodes = neNodes.filter(n => n.id !== id);
+        if (neSelectedNode === _neCtxTarget) neSelectedNode = null;
+        _neCtxTarget.remove();
+        neCloseCtxMenu();
+        neRenderWires();
+    }
+
+    function neSpawnNode(type, x, y, id, label) {
+        const world = document.getElementById("ne-canvas-world");
+        const el = document.createElement("div");
+        el.className = "ne-node";
+        el.dataset.id = id;
+        el.dataset.type = type;
+        el.style.left = x + "px";
+        el.style.top  = y + "px";
+
+        const pi = `<div class="ne-port" data-node="${id}" data-port="in"></div>`;
+        const po = `<div class="ne-port" data-node="${id}" data-port="out"></div>`;
+        let inner = "";
+        if (type === "in") {
+            el.classList.add("node", "ne-node", "ne-in-node");
+            inner = `<div class="start-label">${label || "IN"}</div><div class="node-status">Input</div>${po}`;
+        } else if (type === "out") {
+            el.classList.add("node", "ne-node", "ne-out-node");
+            inner = `${pi}<div class="end-label">${label || "OUT"}</div><div class="node-status">Output</div>`;
+        } else if (type === "gate") {
+            el.classList.add("node", "gate-node", "ne-node");
+            el.dataset.gateType = label;
+            inner = `${pi}<div class="gate-label">${label}</div><div class="node-status">0</div>${po}`;
+        } else if (type === "power") {
+            el.classList.add("node", "ne-node", "ne-power-node");
+            inner = `<div class="power-label">⚡ ${label || "Power"}</div><div class="node-status">ON</div>${po}`;
+        } else if (type === "note") {
+            el.classList.add("node", "note-node", "ne-node");
+            inner = `<div class="note-text">${label || "Note"}</div>`;
+        } else if (type === "checklist") {
+            el.classList.add("node", "ne-node");
+            inner = `${pi}<div class="node-title">${label || "Checklist"}</div><div class="node-status">Waiting</div>${po}`;
+        } else {
+            el.classList.add("node", "ne-node");
+            inner = `${pi}<div class="node-title">${label || "Task"}</div><div class="node-status">Waiting</div>${po}`;
+        }
+        el.innerHTML = inner;
+
+        // Click to select
+        el.addEventListener("click", e => {
+            if (e.target.classList.contains("ne-port")) return;
+            e.stopPropagation();
+            if (!neConnMode) neSelectNode(el);
+        });
+
+        // Drag to reposition
+        el.addEventListener("mousedown", e => {
+            if (e.button !== 0 || e.target.classList.contains("ne-port")) return;
+            e.stopPropagation();
+            _neDragging = { el, startX: e.clientX, startY: e.clientY, origX: parseInt(el.style.left), origY: parseInt(el.style.top) };
+        });
+
+        // Port click — connect mode
+        el.querySelectorAll(".ne-port").forEach(port => {
+            port.addEventListener("mousedown", e => {
+                if (e.button !== 0) return;
+                e.stopPropagation();
+                if (!neConnMode) return;
+                const nodeId = port.dataset.node;
+                const portType = port.dataset.port;
+                if (!nePendingSource) {
+                    if (portType === "out") {
+                        nePendingSource = nodeId;
+                        el.classList.add("ne-pending-src");
+                    }
+                } else {
+                    if (portType === "in" && nodeId !== nePendingSource) {
+                        const dup = neConnections.some(c => c.fromId === nePendingSource && c.toId === nodeId);
+                        if (!dup) {
+                            neConnCounter++;
+                            neConnections.push({ id: "nec-" + neConnCounter, fromId: nePendingSource, toId: nodeId });
+                            neRenderWires();
+                        }
+                    }
+                    const srcEl = world.querySelector(`.ne-node[data-id="${nePendingSource}"]`);
+                    if (srcEl) srcEl.classList.remove("ne-pending-src");
+                    nePendingSource = null;
+                }
+            });
+        });
+
+        world.appendChild(el);
+        neNodes.push({ id, el, type });
+        return el;
+    }
+
+    function neGetPortPos(nodeId, portType) {
+        const world = document.getElementById("ne-canvas-world");
+        const el = world.querySelector(`.ne-node[data-id="${nodeId}"]`);
+        if (!el) return { x: 0, y: 0 };
+        const port = el.querySelector(`[data-port="${portType}"]`);
+        const nodeX = parseInt(el.style.left);
+        const nodeY = parseInt(el.style.top);
+        if (!port) return { x: nodeX + el.offsetWidth / 2, y: nodeY + (portType === "out" ? el.offsetHeight : 0) };
+        return {
+            x: nodeX + port.offsetLeft + port.offsetWidth  / 2,
+            y: nodeY + port.offsetTop  + port.offsetHeight / 2
+        };
+    }
+
+    function neRenderWires() {
+        const svg = document.getElementById("ne-wire-svg");
+        svg.innerHTML = "";
+        neConnections.forEach(c => {
+            const from = neGetPortPos(c.fromId, "out");
+            const to   = neGetPortPos(c.toId,   "in");
+            const dy   = Math.max(Math.abs(to.y - from.y) * 0.5, 40);
+            const d    = `M${from.x} ${from.y} C${from.x} ${from.y+dy},${to.x} ${to.y-dy},${to.x} ${to.y}`;
+
+            const isSelected = c.id === neSelectedConnId;
+
+            // Invisible wide hit area for click-to-select
+            const hit = document.createElementNS("http://www.w3.org/2000/svg", "path");
+            hit.setAttribute("d", d); hit.setAttribute("stroke", "transparent");
+            hit.setAttribute("stroke-width", "10"); hit.setAttribute("fill", "none");
+            hit.style.pointerEvents = "stroke"; hit.style.cursor = "pointer";
+            hit.addEventListener("click", (e) => {
+                e.stopPropagation();
+                neDeselectAll();
+                neSelectedConnId = c.id;
+                neRenderWires();
+            });
+            svg.appendChild(hit);
+
+            // White selection outline (rendered behind the color)
+            if (isSelected) {
+                const outline = document.createElementNS("http://www.w3.org/2000/svg", "path");
+                outline.setAttribute("d", d); outline.setAttribute("stroke", "rgba(200,160,255,0.7)");
+                outline.setAttribute("stroke-width", "5"); outline.setAttribute("fill", "none");
+                outline.setAttribute("stroke-linecap", "round"); outline.style.pointerEvents = "none";
+                svg.appendChild(outline);
+            }
+
+            // Visible wire
+            const vis = document.createElementNS("http://www.w3.org/2000/svg", "path");
+            vis.setAttribute("d", d); vis.setAttribute("stroke", "#7a30b0");
+            vis.setAttribute("stroke-width", isSelected ? "2.5" : "2"); vis.setAttribute("fill", "none");
+            vis.setAttribute("stroke-linecap", "round"); vis.style.pointerEvents = "none";
+            svg.appendChild(vis);
+        });
+    }
+
+    function neToggleConnect() {
+        neConnMode = !neConnMode;
+        document.getElementById("ne-connect-btn").classList.toggle("active", neConnMode);
+        document.getElementById("ne-canvas-wrap").classList.toggle("ne-connect-mode", neConnMode);
+        if (!neConnMode && nePendingSource) {
+            const world = document.getElementById("ne-canvas-world");
+            const srcEl = world.querySelector(`.ne-node[data-id="${nePendingSource}"]`);
+            if (srcEl) srcEl.classList.remove("ne-pending-src");
+            nePendingSource = null;
+        }
+    }
+
+    function _neCenterWorld(jitterX, jitterY) {
+        const wrap = document.getElementById("ne-canvas-wrap");
+        const w = neScreenToWorld(wrap.getBoundingClientRect().left + wrap.clientWidth  / 2, wrap.getBoundingClientRect().top  + wrap.clientHeight / 2);
+        return { x: Math.round(w.x + (Math.random() - 0.5) * (jitterX || 80)), y: Math.round(w.y + (Math.random() - 0.5) * (jitterY || 60)) };
+    }
+
+    function neAddTaskNode() {
+        neNodeCounter++;
+        const { x, y } = _neCenterWorld();
+        neSpawnNode("task", x, y, "ne-" + neNodeCounter, "Task");
+    }
+
+    function neAddInNode() {
+        neNodeCounter++;
+        const inCount = neNodes.filter(n => n.type === "in").length;
+        const tl = neScreenToWorld(document.getElementById("ne-canvas-wrap").getBoundingClientRect().left + 30, document.getElementById("ne-canvas-wrap").getBoundingClientRect().top + 40);
+        neSpawnNode("in", Math.round(tl.x), Math.round(tl.y) + inCount * 110, "ne-" + neNodeCounter, "IN " + (inCount + 1));
+    }
+
+    function neAddOutNode() {
+        neNodeCounter++;
+        const outCount = neNodes.filter(n => n.type === "out").length;
+        const wrap = document.getElementById("ne-canvas-wrap");
+        const r = wrap.getBoundingClientRect();
+        const tr = neScreenToWorld(r.right - 140, r.top + 40);
+        neSpawnNode("out", Math.round(tr.x), Math.round(tr.y) + outCount * 110, "ne-" + neNodeCounter, "OUT " + (outCount + 1));
+    }
+
+    function neAddGateNode(gateType) {
+        neNodeCounter++;
+        const { x, y } = _neCenterWorld(100, 80);
+        neSpawnNode("gate", x, y, "ne-" + neNodeCounter, gateType);
+    }
+
+    function neAddNoteNode() {
+        neNodeCounter++;
+        const { x, y } = _neCenterWorld();
+        neSpawnNode("note", x, y, "ne-" + neNodeCounter, "Note");
+    }
+
+    function neAddChecklistNode() {
+        neNodeCounter++;
+        const { x, y } = _neCenterWorld();
+        neSpawnNode("checklist", x, y, "ne-" + neNodeCounter, "Checklist");
+    }
+
+    function neAddPowerNode() {
+        neNodeCounter++;
+        const { x, y } = _neCenterWorld(60, 50);
+        neSpawnNode("power", x, y, "ne-" + neNodeCounter, "Power");
+    }
+
+    function saveNodeType() {
+        const name = document.getElementById("ne-name-input").value.trim();
+        if (!name) { showToast("Enter a node type name", "#cc5555"); return; }
+        const color  = document.getElementById("ne-color-input").value;
+        const inputs  = neNodes.filter(n => n.type === "in").length;
+        const outputs = neNodes.filter(n => n.type === "out").length;
+        const nodesData = neNodes.map(n => {
+            const nd = {
+                id: n.id, type: n.type,
+                x: parseInt(n.el.style.left), y: parseInt(n.el.style.top),
+                label: n.el.querySelector(".node-title,.gate-label,.note-text,.start-label,.end-label,.power-label")?.textContent?.replace(/^⚡\s*/,"") || ""
+            };
+            if (n.el.dataset.gateType) nd.gateType = n.el.dataset.gateType;
+            return nd;
+        });
+        const connsData = neConnections.map(c => ({ id: c.id, fromId: c.fromId, toId: c.toId }));
+        const payload = { name, color, nodes: nodesData, connections: connsData, inputs, outputs };
+        const url = _editingTypeId !== null ? `/node_types/${_editingTypeId}` : "/node_types";
+        fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) })
+            .then(r => r.json()).then(d => {
+                if (d.error) { showToast(d.error, "#cc5555"); return; }
+                showToast(_editingTypeId !== null ? "Node type updated!" : "Node type created!", "#60c080");
+                closeNodeEditor();
+                loadNodeTypes();
+            });
+    }
+
+    // Mini canvas keyboard shortcuts — only active when editor is open
+    document.addEventListener("keydown", e => {
+        if (!document.getElementById("node-editor-overlay").classList.contains("visible")) return;
+        if (document.activeElement && (document.activeElement.tagName === "INPUT" || document.activeElement.tagName === "TEXTAREA")) return;
+
+        if (e.key === "Delete" || e.key === "Backspace") {
+            e.preventDefault();
+            if (neSelectedConnId) {
+                neConnections = neConnections.filter(c => c.id !== neSelectedConnId);
+                neSelectedConnId = null;
+                neRenderWires();
+            } else if (neSelectedNode) {
+                const id = neSelectedNode.dataset.id;
+                neConnections = neConnections.filter(c => c.fromId !== id && c.toId !== id);
+                neNodes = neNodes.filter(n => n.id !== id);
+                neSelectedNode.remove();
+                neSelectedNode = null;
+                neRenderWires();
+            }
+        }
+
+        if (e.key === "Escape") {
+            neCloseCtxMenu();
+            if (neConnMode) neToggleConnect();
+            else neDeselectAll();
+        }
+    });
+
+    // Pan + zoom + drag for mini canvas (attached once after body loads)
+    document.addEventListener("DOMContentLoaded", () => {
+        const wrap  = document.getElementById("ne-canvas-wrap");
+        const world = document.getElementById("ne-canvas-world");
+
+        // Scroll to zoom
+        wrap.addEventListener("wheel", e => {
+            e.preventDefault();
+            const factor = e.deltaY < 0 ? 1.1 : 0.9;
+            const r = wrap.getBoundingClientRect();
+            const mx = e.clientX - r.left;
+            const my = e.clientY - r.top;
+            nePanX = mx - (mx - nePanX) * factor;
+            nePanY = my - (my - nePanY) * factor;
+            neZoom = Math.min(4, Math.max(0.15, neZoom * factor));
+            neApplyViewTransform();
+        }, { passive: false });
+
+        // Middle-mouse or left-drag on empty space to pan
+        wrap.addEventListener("mousedown", e => {
+            if (e.button !== 0 && e.button !== 1) return;
+            if (e.target.closest(".ne-node")) return;
+            if (neConnMode && e.button === 0) {
+                if (nePendingSource) {
+                    const srcEl = world.querySelector(`.ne-node[data-id="${nePendingSource}"]`);
+                    if (srcEl) srcEl.classList.remove("ne-pending-src");
+                    nePendingSource = null;
+                }
+                return;
+            }
+            _nePanning = true;
+            _nePanStart = { x: e.clientX, y: e.clientY, px: nePanX, py: nePanY };
+            wrap.classList.add("ne-panning");
+            e.preventDefault();
+        });
+
+        wrap.addEventListener("contextmenu", e => {
+            e.preventDefault();
+            const node = e.target.closest(".ne-node");
+            if (node) { neSelectNode(node); neOpenCtxMenu(node, e.clientX, e.clientY); }
+            else neCloseCtxMenu();
+        });
+        wrap.addEventListener("mousedown", e => { if (e.button === 2) e.preventDefault(); });
+
+        // Click on background → deselect
+        wrap.addEventListener("click", e => {
+            if (!e.target.closest(".ne-node")) { neDeselectAll(); neCloseCtxMenu(); }
+        });
+
+        window.addEventListener("mousemove", e => {
+            if (_nePanning) {
+                nePanX = _nePanStart.px + (e.clientX - _nePanStart.x);
+                nePanY = _nePanStart.py + (e.clientY - _nePanStart.y);
+                neApplyViewTransform();
+            }
+            if (_neDragging) {
+                _neDragging.el.style.left = (_neDragging.origX + (e.clientX - _neDragging.startX) / neZoom) + "px";
+                _neDragging.el.style.top  = (_neDragging.origY + (e.clientY - _neDragging.startY) / neZoom) + "px";
+                neRenderWires();
+            }
+        });
+        window.addEventListener("mouseup", e => {
+            if (e.button === 0 || e.button === 1) {
+                _nePanning = false; _neDragging = null;
+                wrap.classList.remove("ne-panning");
+            }
+        });
+    });
 
     // --- Restore saved state on open ---
     (function() {
@@ -2902,6 +3832,7 @@ function resetAll() {
             document.getElementById("ui-theme-picker").value = _darkThemeColor;
         }
         _applyGridSvg();
+        loadNodeTypes();
     })();
 </script>
 

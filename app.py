@@ -36,6 +36,17 @@ def init_db():
             connections TEXT DEFAULT '[]',
             FOREIGN KEY (user_id) REFERENCES users(id)
         );
+        CREATE TABLE IF NOT EXISTS node_types (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            name TEXT NOT NULL,
+            color TEXT DEFAULT '#7a30b0',
+            nodes TEXT DEFAULT '[]',
+            connections TEXT DEFAULT '[]',
+            inputs INTEGER DEFAULT 1,
+            outputs INTEGER DEFAULT 1,
+            FOREIGN KEY (user_id) REFERENCES users(id)
+        );
     """)
     try:
         db.execute("ALTER TABLE users ADD COLUMN preferences TEXT DEFAULT '{}'")
@@ -297,6 +308,82 @@ def save_flowchart():
     db.commit()
     db.close()
     return jsonify({"message": "Saved!"})
+
+
+@app.route("/node_types", methods=["GET"])
+@login_required
+def get_node_types():
+    db = get_db()
+    rows = db.execute(
+        "SELECT id, name, color, nodes, connections, inputs, outputs FROM node_types WHERE user_id = ? ORDER BY id ASC",
+        (session["user_id"],)
+    ).fetchall()
+    db.close()
+    return jsonify([{
+        "id": r["id"], "name": r["name"], "color": r["color"],
+        "nodes": json.loads(r["nodes"]), "connections": json.loads(r["connections"]),
+        "inputs": r["inputs"], "outputs": r["outputs"]
+    } for r in rows])
+
+
+@app.route("/node_types", methods=["POST"])
+@login_required
+def create_node_type():
+    data = request.get_json()
+    name = data.get("name", "").strip()
+    if not name:
+        return jsonify({"error": "Name required"}), 400
+    db = get_db()
+    cursor = db.execute(
+        "INSERT INTO node_types (user_id, name, color, nodes, connections, inputs, outputs) VALUES (?,?,?,?,?,?,?)",
+        (session["user_id"], name, data.get("color", "#7a30b0"),
+         json.dumps(data.get("nodes", [])), json.dumps(data.get("connections", [])),
+         data.get("inputs", 1), data.get("outputs", 1))
+    )
+    new_id = cursor.lastrowid
+    db.commit()
+    db.close()
+    return jsonify({"ok": True, "id": new_id})
+
+
+@app.route("/node_types/<int:type_id>", methods=["POST"])
+@login_required
+def update_node_type(type_id):
+    data = request.get_json()
+    db = get_db()
+    row = db.execute("SELECT id FROM node_types WHERE id = ? AND user_id = ?",
+                     (type_id, session["user_id"])).fetchone()
+    if not row:
+        db.close()
+        return jsonify({"error": "Not found"}), 404
+    name = data.get("name", "").strip()
+    if not name:
+        db.close()
+        return jsonify({"error": "Name required"}), 400
+    db.execute(
+        "UPDATE node_types SET name=?, color=?, nodes=?, connections=?, inputs=?, outputs=? WHERE id=?",
+        (name, data.get("color", "#7a30b0"),
+         json.dumps(data.get("nodes", [])), json.dumps(data.get("connections", [])),
+         data.get("inputs", 1), data.get("outputs", 1), type_id)
+    )
+    db.commit()
+    db.close()
+    return jsonify({"ok": True})
+
+
+@app.route("/node_types/<int:type_id>/delete", methods=["POST"])
+@login_required
+def delete_node_type(type_id):
+    db = get_db()
+    row = db.execute("SELECT id FROM node_types WHERE id = ? AND user_id = ?",
+                     (type_id, session["user_id"])).fetchone()
+    if not row:
+        db.close()
+        return jsonify({"error": "Not found"}), 404
+    db.execute("DELETE FROM node_types WHERE id = ?", (type_id,))
+    db.commit()
+    db.close()
+    return jsonify({"ok": True})
 
 
 if __name__ == "__main__":
